@@ -192,10 +192,15 @@
             };
 
             const orderIdMatch = data.match(/参加者QR注文ID:\s*([^-]+)-/);
+            // 参加者QR注文ID: 1028- 学術集会参加登録 - 会員（医師・歯科医- 懇親会参加登録 - 一般氏名: 笠原 敬
+            // 参加者QR注文ID: 1030- 懇親会参加登録一般 ｰ 懇親会参加登録 - 学部生・院生・初期研氏名:井垣 達詞
             if (orderIdMatch && orderIdMatch[1]) parsedData.orderId = orderIdMatch[1].trim();
 
             const nameMatch = data.match(/氏名:\s*(.+)/);
             if (nameMatch && nameMatch[1]) parsedData.name = nameMatch[1].trim();
+
+            if (data.includes("学術集会参加登録")) parsedData.participantType.push("学術集会参加登録");
+
 
             if (data.includes("懇親会参加登録")) parsedData.isAttendingReception = true;
 
