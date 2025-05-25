@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QRコード受付システム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior-y: contain;
+        }
+        #video-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        #qr-video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        #scan-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .scan-box {
+            width: 60%;
+            height: 60%;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            border-radius: 0.5rem;
+        }
+        .ticket {
+            transition: all 0.3s ease-in-out;
+        }
+        .ticket-icon {
+            font-size: 1.8rem;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* 履歴アイテムのスタイル */
+        .history-item {
+            border-bottom: 1px solid #e5e7eb; /* slate-200 */
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-2xl bg-white rounded-xl shadow-xl p-6 md:p-8 space-y-6">
+        <header class="text-center">
+            <h1 class="text-3xl font-bold text-slate-800">学会QR受付</h1>
+            <p class="text-slate-600 mt-1">QRコードをカメラにかざしてください。</p>
+        </header>
+
+        <div id="video-container" class="hidden bg-slate-800">
+            <video id="qr-video" playsinline></video>
+            <div id="scan-overlay">
+                <div class="scan-box"></div>
+            </div>
+        </div>
+        <canvas id="qr-canvas" class="hidden"></canvas>
+
+        <div id="loading-message" class="text-center py-4 text-slate-600 hidden">
+            <div class="spinner mx-auto mb-2"></div>
+            カメラを準備しています...
+        </div>
+        
+        <div id="error-message" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">
+            <p class="font-bold">エラー</p>
+            <p id="error-text"></p>
+        </div>
+
+        <div id="controls" class="flex flex-col sm:flex-row gap-3 justify-center">
+            <button id="start-scan-button" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm10.5 4.707a.5.5 0 00-.854-.353L9 10.293l-1.646-1.647a.5.5 0 00-.708.708l2 2a.5.5 0 00.708 0l5-5a.5.5 0 00-.354-.854zM5 6a1 1 0 100-2 1 1 0 000 2zm0 4a1 1 0 100-2 1 1 0 000 2zm0 4a1 1 0 100-2 1 1 0 000 2zm3-8a1 1 0 100-2 1 1 0 000 2zm0 4a1 1 0 100-2 1 1 0 000 2zm0 4a1 1 0 100-2 1 1 0 000 2zm3-8a1 1 0 100-2 1 1 0 000 2zm0 4a1 1 0 100-2 1 1 0 000 2zm0 4a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
+                スキャン開始
+            </button>
+            <button id="stop-scan-button" class="w-full sm:w-auto bg-slate-500 hover:bg-slate-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-opacity-50 hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1zm0 4a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>
+                スキャン停止
+            </button>
+        </div>
+         <div class="text-center mt-4">
+            <button id="show-history-button" class="w-full sm:w-auto bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-opacity-50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                この端末の読み取り履歴
+            </button>
+        </div>
+        
+        <div id="result-container" class="hidden bg-slate-50 p-6 rounded-lg shadow space-y-4">
+            <h2 class="text-2xl font-semibold text-slate-700 border-b pb-2">受付情報</h2>
+            <div>
+                <p class="text-sm text-slate-500">氏名:</p>
+                <p id="participant-name" class="text-lg font-medium text-slate-800">-</p>
+            </div>
+            <div>
+                <p class="text-sm text-slate-500">注文ID:</p>
+                <p id="participant-id" class="text-lg font-medium text-slate-800">-</p>
+            </div>
+            <div>
+                <p class="text-sm text-slate-500">参加情報:</p>
+                <p id="participant-info" class="text-lg font-medium text-slate-800">-</p>
+            </div>
+
+            <h3 class="text-xl font-semibold text-slate-700 pt-4 border-t mt-4">発行チケット</h3>
+            <div id="tickets-area" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                </div>
+            <p class="text-xs text-slate-500 mt-2">※ランチョンセミナー等のチケットは、QRコードの情報に依存します。QRコードに該当情報が含まれていない場合、表示されません。</p>
+        </div>
+
+        <div id="history-container" class="hidden bg-gray-50 p-6 rounded-lg shadow space-y-4 mt-6">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h2 class="text-2xl font-semibold text-slate-700">読み取り履歴</h2>
+                <button id="clear-history-button" class="text-sm bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-3 rounded-md transition duration-150 ease-in-out">
+                    履歴をクリア
+                </button>
+            </div>
+            <div id="history-list" class="max-h-96 overflow-y-auto space-y-3">
+                </div>
+            <p id="no-history-message" class="text-slate-500 text-center py-4 hidden">読み取り履歴はありません。</p>
+        </div>
+
+    </div>
+
+    <script>
+        const video = document.getElementById('qr-video');
+        const canvasElement = document.getElementById('qr-canvas');
+        const canvas = canvasElement.getContext('2d');
+        
+        const loadingMessage = document.getElementById('loading-message');
+        const errorMessageDiv = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        
+        const startScanButton = document.getElementById('start-scan-button');
+        const stopScanButton = document.getElementById('stop-scan-button');
+        
+        const videoContainer = document.getElementById('video-container');
+        const resultContainer = document.getElementById('result-container');
+        
+        const participantNameEl = document.getElementById('participant-name');
+        const participantIdEl = document.getElementById('participant-id');
+        const participantInfoEl = document.getElementById('participant-info');
+        const ticketsArea = document.getElementById('tickets-area');
+
+        const showHistoryButton = document.getElementById('show-history-button');
+        const historyContainer = document.getElementById('history-container');
+        const historyList = document.getElementById('history-list');
+        const noHistoryMessage = document.getElementById('no-history-message');
+        const clearHistoryButton = document.getElementById('clear-history-button');
+
+        const HISTORY_KEY = 'qrScannerHistory';
+        let stream = null;
+        let animationFrameId = null;
+
+        // QRコードから情報をパースする関数
+        function parseQRData(data) {
+            const parsedData = {
+                orderId: null,
+                name: null,
+                isAttendingReception: false,
+                participantType: [],
+                raw: data
+            };
+
+            const orderIdMatch = data.match(/参加者QR注文ID:\s*([^-]+)-/);
+            if (orderIdMatch && orderIdMatch[1]) parsedData.orderId = orderIdMatch[1].trim();
+
+            const nameMatch = data.match(/氏名:\s*(.+)/);
+            if (nameMatch && nameMatch[1]) parsedData.name = nameMatch[1].trim();
+
+            if (data.includes("懇親会参加登録")) parsedData.isAttendingReception = true;
+
+            const parts = data.split('-');
+            parts.forEach(part => {
+                const trimmedPart = part.trim();
+                if (trimmedPart === "一般") parsedData.participantType.push("一般");
+                else if (trimmedPart === "学部生・院生・初期研") parsedData.participantType.push("学部生・院生・初期研");
+            });
+            if (parsedData.participantType.length === 0) parsedData.participantType.push("不明");
+
+            console.log("Parsed QR Data:", parsedData);
+            return parsedData;
+        }
+
+        // チケットを表示する関数
+        function displayTickets(parsedData) {
+            ticketsArea.innerHTML = ''; 
+            createTicketElement("受付票", "✅", "bg-green-100 text-green-700", "参加登録ありがとうございます。");
+            if (parsedData.isAttendingReception) {
+                createTicketElement("懇親会チケット", "🍻", "bg-blue-100 text-blue-700", "懇親会にご参加いただけます。");
+            }
+            // 他のチケットのロジックはここに
+        }
+
+        function createTicketElement(title, icon, colorClasses, description) {
+            const ticketDiv = document.createElement('div');
+            ticketDiv.className = `ticket p-4 rounded-lg shadow-sm flex items-start space-x-3 ${colorClasses}`;
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'ticket-icon text-2xl';
+            iconSpan.textContent = icon;
+            const textDiv = document.createElement('div');
+            const titleP = document.createElement('p');
+            titleP.className = 'font-semibold';
+            titleP.textContent = title;
+            const descP = document.createElement('p');
+            descP.className = 'text-sm';
+            descP.textContent = description;
+            textDiv.appendChild(titleP);
+            textDiv.appendChild(descP);
+            ticketDiv.appendChild(iconSpan);
+            ticketDiv.appendChild(textDiv);
+            ticketsArea.appendChild(ticketDiv);
+        }
+
+        // 読み取り履歴をlocalStorageに保存
+        function saveToHistory(parsedData, participantInfoString) {
+            try {
+                const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+                const newEntry = {
+                    timestamp: new Date().toISOString(),
+                    name: parsedData.name || 'N/A',
+                    orderId: parsedData.orderId || 'N/A',
+                    info: participantInfoString || 'N/A',
+                    raw: parsedData.raw
+                };
+                history.unshift(newEntry); // 新しいものを先頭に追加
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 100))); // 最新100件まで保存
+            } catch (e) {
+                console.error("履歴の保存に失敗しました:", e);
+                showError("履歴の保存に失敗しました。ストレージの空き容量を確認してください。");
+            }
+        }
+
+        // 履歴を読み込んで表示
+        function loadAndDisplayHistory() {
+            try {
+                const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+                historyList.innerHTML = ''; // 表示をクリア
+
+                if (history.length === 0) {
+                    noHistoryMessage.classList.remove('hidden');
+                    historyList.classList.add('hidden');
+                } else {
+                    noHistoryMessage.classList.add('hidden');
+                    historyList.classList.remove('hidden');
+                    history.forEach(entry => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'history-item p-3 bg-white rounded-md shadow-sm';
+                        
+                        const date = new Date(entry.timestamp);
+                        const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+                        itemDiv.innerHTML = `
+                            <p class="text-sm text-slate-500">${formattedDate}</p>
+                            <p class="font-semibold text-slate-800">氏名: ${entry.name}</p>
+                            <p class="text-sm text-slate-600">注文ID: ${entry.orderId}</p>
+                            <p class="text-sm text-slate-600">参加情報: ${entry.info}</p>
+                        `;
+                        historyList.appendChild(itemDiv);
+                    });
+                }
+                historyContainer.classList.remove('hidden');
+            } catch (e) {
+                console.error("履歴の読み込みに失敗しました:", e);
+                showError("履歴の読み込みに失敗しました。");
+                historyContainer.classList.add('hidden');
+            }
+        }
+        
+        // 履歴をクリア
+        function clearHistory() {
+            if (confirm("本当にこの端末の読み取り履歴をすべて削除しますか？")) {
+                try {
+                    localStorage.removeItem(HISTORY_KEY);
+                    loadAndDisplayHistory(); // 表示を更新
+                    alert("履歴をクリアしました。");
+                } catch (e) {
+                    console.error("履歴のクリアに失敗しました:", e);
+                    showError("履歴のクリアに失敗しました。");
+                }
+            }
+        }
+
+
+        // スキャン処理
+        function tick() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                loadingMessage.classList.add('hidden');
+                videoContainer.classList.remove('hidden');
+                
+                canvasElement.height = video.videoHeight;
+                canvasElement.width = video.videoWidth;
+                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+                
+                const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
+
+                if (code) {
+                    console.log("QR Code detected:", code.data);
+                    stopScan(); 
+                    
+                    const parsedData = parseQRData(code.data);
+                    
+                    participantNameEl.textContent = parsedData.name || '取得できませんでした';
+                    participantIdEl.textContent = parsedData.orderId || '取得できませんでした';
+                    
+                    let infoStr = `${parsedData.participantType.join(', ')}`;
+                    if (parsedData.isAttendingReception) {
+                        infoStr += " (懇親会参加)";
+                    }
+                    participantInfoEl.textContent = infoStr;
+
+                    displayTickets(parsedData);
+                    resultContainer.classList.remove('hidden');
+                    
+                    // 履歴に保存
+                    saveToHistory(parsedData, infoStr);
+
+                    // TODO: Fetch API
+                } else {
+                    animationFrameId = requestAnimationFrame(tick);
+                }
+            } else {
+                animationFrameId = requestAnimationFrame(tick);
+            }
+        }
+
+        function startScan() {
+            hideError();
+            resultContainer.classList.add('hidden'); 
+            historyContainer.classList.add('hidden'); // スキャン開始時に履歴を隠す
+            loadingMessage.classList.remove('hidden');
+            videoContainer.classList.add('hidden');
+
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(function(s) {
+                    stream = s;
+                    video.srcObject = stream;
+                    video.setAttribute("playsinline", true); 
+                    video.play();
+                    animationFrameId = requestAnimationFrame(tick);
+                    
+                    startScanButton.classList.add('hidden');
+                    stopScanButton.classList.remove('hidden');
+                })
+                .catch(function(err) {
+                    console.error("Error accessing camera: ", err);
+                    showError(`カメラへのアクセスに失敗しました: ${err.name === 'NotAllowedError' ? '許可されていません。ブラウザの設定を確認してください。' : err.message}`);
+                    loadingMessage.classList.add('hidden');
+                });
+        }
+
+        function stopScan() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null; // ストリームをクリア
+            }
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            videoContainer.classList.add('hidden');
+            loadingMessage.classList.add('hidden');
+            startScanButton.classList.remove('hidden');
+            stopScanButton.classList.add('hidden');
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessageDiv.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMessageDiv.classList.add('hidden');
+        }
+
+        startScanButton.addEventListener('click', startScan);
+        stopScanButton.addEventListener('click', () => {
+            stopScan();
+            resultContainer.classList.add('hidden');
+        });
+
+        showHistoryButton.addEventListener('click', () => {
+            // 履歴表示エリアの表示/非表示をトグル
+            if (historyContainer.classList.contains('hidden')) {
+                loadAndDisplayHistory(); // 表示する前に最新の履歴を読み込む
+            } else {
+                historyContainer.classList.add('hidden');
+            }
+        });
+        
+        clearHistoryButton.addEventListener('click', clearHistory);
+
+
+        // 初期状態
+        stopScanButton.classList.add('hidden');
+        resultContainer.classList.add('hidden');
+        historyContainer.classList.add('hidden'); // 最初は履歴を非表示
+
+    </script>
+</body>
+</html>
