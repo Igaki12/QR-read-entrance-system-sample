@@ -140,8 +140,8 @@
         <div id="history-container" class="hidden bg-gray-50 p-6 rounded-lg shadow space-y-4 mt-6">
             <div class="flex justify-between items-center border-b pb-2">
                 <h2 class="text-2xl font-semibold text-slate-700">読み取り履歴</h2>
-                <button id="clear-history-button" class="text-sm bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-3 rounded-md transition duration-150 ease-in-out">
-                    履歴をクリア
+                <button id="copy-history-button" class="text-sm bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-3 rounded-md transition duration-150 ease-in-out">
+                    全履歴をコピー
                 </button>
             </div>
             <div id="history-list" class="max-h-96 overflow-y-auto space-y-3">
@@ -175,7 +175,8 @@
         const historyContainer = document.getElementById('history-container');
         const historyList = document.getElementById('history-list');
         const noHistoryMessage = document.getElementById('no-history-message');
-        const clearHistoryButton = document.getElementById('clear-history-button');
+        // const clearHistoryButton = document.getElementById('clear-history-button');
+        const copyHistoryButton = document.getElementById('copy-history-button');
 
         const HISTORY_KEY = 'qrScannerHistory';
         let stream = null;
@@ -286,10 +287,7 @@
 
                         itemDiv.innerHTML = `
                             <p class="text-sm text-slate-500">${formattedDate}</p>
-                            <p class="font-semibold text-slate-800">氏名: ${entry.name}</p>
-                            <p class="text-sm text-slate-600">注文ID: ${entry.orderId}</p>
-                            <p class="text-sm text-slate-600">参加情報: ${entry.info}</p>
-                            <p class="text-xs text-slate-400 mt-1">原文: ${entry.raw}</p>
+                            <p class="text-xs text-slate-400 mt-1">${entry.raw}</p>
                         `;
                         historyList.appendChild(itemDiv);
                     });
@@ -302,7 +300,7 @@
             }
         }
         
-        // 履歴をクリア
+        // 履歴をクリア → 削除。同じ場所に「履歴をすべてコピー」を設置
         function clearHistory() {
             if (confirm("本当にこの端末の読み取り履歴をすべて削除しますか？")) {
                 try {
@@ -313,6 +311,32 @@
                     console.error("履歴のクリアに失敗しました:", e);
                     showError("履歴のクリアに失敗しました。");
                 }
+            }
+        }
+
+
+        // 履歴をクリップボードにコピーする関数
+        function copyHistory() {
+            try {
+                const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+                if (history.length === 0) {
+                    alert("コピーする履歴がありません。");
+                    return;
+                }
+                const historyText = history.map(entry => {
+                    const date = new Date(entry.timestamp);
+                    return `${date.toISOString()} 原文: ${entry.raw}`;
+                }).join('\n');
+                
+                navigator.clipboard.writeText(historyText).then(() => {
+                    alert("履歴をクリップボードにコピーしました。");
+                }).catch(err => {
+                    console.error("履歴のコピーに失敗:", err);
+                    showError("履歴のコピーに失敗しました。");
+                });
+            } catch (e) {
+                console.error("履歴のコピーに失敗:", e);
+                showError("履歴のコピーに失敗しました。");
             }
         }
 
@@ -426,7 +450,9 @@
             }
         });
         
-        clearHistoryButton.addEventListener('click', clearHistory);
+        // clearHistoryButton.addEventListener('click', clearHistory);
+        // 全履歴をコピー webstorageから取得してクリップボードにコピー
+        copyHistoryButton.addEventListener('click', copyHistory);
 
 
         // 初期状態
