@@ -138,23 +138,28 @@
                     raw: text
                 };
 
+                // Extract name (氏名)
                 const nameMatch = text.match(/氏名:\s*(.*)/);
                 if (nameMatch && nameMatch[1]) {
                     data.name = nameMatch[1].trim();
                 }
 
+                // Extract participation type (学術集会参加登録)
                 const typeMatch = text.match(/学術集会参加登録\s*-\s*([^-]+)/);
                 if (typeMatch && typeMatch[1]) {
                     data.participationType = typeMatch[1].trim();
                 } else {
+                    // Fallback for other types
                     if (text.includes('一般')) data.participationType = '一般';
                     if (text.includes('学部生・院生')) data.participationType = '学部生・院生';
                 }
 
+                // Check for social event (懇親会参加登録)
                 if (text.includes('懇親会参加登録')) {
                     data.socialEvent = '参加';
                 }
 
+                // Extract all luncheon seminars (LS-X)
                 const luncheonRegex = /LS-\d+.*?(-|氏名:|$)/g;
                 let match;
                 while ((match = luncheonRegex.exec(text)) !== null) {
@@ -224,6 +229,7 @@
                     }
                 }
                 
+                // Sort by timestamp descending (newest first)
                 records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
                 if (records.length === 0) {
@@ -238,6 +244,7 @@
              * Starts the QR code scanner.
              */
             function startScanner() {
+                // If scanner instance doesn't exist, create it
                 if (!html5QrCode) {
                     html5QrCode = new Html5Qrcode("reader");
                 }
@@ -245,7 +252,7 @@
                 scannerStatus.textContent = 'カメラを起動中...';
                 
                 html5QrCode.start(
-                    { facingMode: "environment" },
+                    { facingMode: "environment" }, // Use the back camera
                     {
                         fps: 10,
                         qrbox: (viewfinderWidth, viewfinderHeight) => {
@@ -254,10 +261,12 @@
                         }
                     },
                     (decodedText, decodedResult) => {
-                        // [FIX] Changed to async function
+                        // --- QR Code Scan Success ---
                         onScanSuccess(decodedText);
                     },
-                    (errorMessage) => { /* ignore */ }
+                    (errorMessage) => {
+                        // Parse error, ignore.
+                    }
                 ).then(() => {
                     scannerStatus.textContent = 'スキャン待機中';
                 }).catch((err) => {
@@ -268,33 +277,22 @@
             
             /**
              * Stops the QR code scanner.
-             * [FIX] Changed to async function to ensure it completes.
              */
-            async function stopScanner() {
+            function stopScanner() {
                 if (html5QrCode && html5QrCode.isScanning) {
-                    try {
-                        await html5QrCode.stop();
-                    } catch (err) {
+                    html5QrCode.stop().catch(err => {
                         console.error("Scanner stop failed", err);
-                    }
+                    });
                 }
             }
             
             /**
              * Handles successful QR code scans.
-             * [FIX] Made this function async to wait for the scanner to stop.
              * @param {string} qrText - The decoded text from the QR code.
              */
-            async function onScanSuccess(qrText) {
-                // [FIX] First, properly stop the scanner and wait for it to complete.
-                await stopScanner();
-                
-                // [FIX] Check if vibrate is supported before calling it.
-                if (navigator.vibrate) {
-                    navigator.vibrate(200); 
-                }
-
-                // Now that the scanner is stopped, perform all other actions.
+            function onScanSuccess(qrText) {
+                stopScanner();
+                navigator.vibrate(200); // Vibrate on success
                 const parsedData = parseQrText(qrText);
                 saveRecordToHistory(qrText);
                 displayResult(parsedData);
@@ -304,9 +302,8 @@
 
             // --- Event Listeners ---
 
-            showHistoryBtn.addEventListener('click', async () => {
-                // [FIX] Wait for scanner to stop before showing history
-                await stopScanner();
+            showHistoryBtn.addEventListener('click', () => {
+                stopScanner();
                 showHistory();
             });
 
@@ -329,6 +326,7 @@
                         setTimeout(() => copyFeedback.classList.add('hidden'), 2000);
                     }).catch(err => {
                         console.error('クリップボードへのコピーに失敗しました:', err);
+                        // Fallback for older browsers
                         try {
                             const textArea = document.createElement("textarea");
                             textArea.value = textToCopy;
