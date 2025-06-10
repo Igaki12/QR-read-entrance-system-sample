@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<!-- 全ての機能が充実した完成モデル。iOSでも動作する。動画:https://youtu.be/FOwmZb7KRIY?si=UowRawgiygdt0OnK はこのモデルを使用。 -->
+ <!-- このモデルをVPSに搭載するが、オフライン版は外部に頼らない様にさらに修正を加えている -> index.html -->
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学会入場管理システム</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- QR Code scanning library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        /* Custom styles for the app */
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+        }
+        #reader__dashboard_section_csr button {
+            background-color: #4a5568 !important;
+            color: white !important;
+            border-radius: 0.5rem;
+        }
+        #reader__dashboard_section_swaplink {
+            display: none !important;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div id="app-container" class="max-w-xl mx-auto p-4 md:p-6">
+
+        <!-- ===== Scanner View ===== -->
+        <div id="scanner-view">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h1 class="text-2xl font-bold text-center text-gray-800 mb-2">QRコードをスキャン</h1>
+                <p class="text-center text-gray-500 mb-4">参加者のQRコードをカメラにかざしてください。</p>
+                <div id="reader" class="w-full rounded-lg overflow-hidden border-4 border-gray-200"></div>
+                 <div id="scanner-status" class="text-center text-blue-600 mt-4 font-semibold">カメラを起動中...</div>
+            </div>
+            <div class="mt-6 text-center">
+                <button id="show-history-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    読み取り履歴を表示
+                </button>
+            </div>
+        </div>
+
+        <!-- ===== Result View ===== -->
+        <div id="result-view" class="hidden">
+            <div class="bg-white rounded-xl shadow-lg p-6 animate-fade-in">
+                <h2 class="text-2xl font-bold text-center text-green-600 mb-6">読み取り完了</h2>
+                <div id="result-container" class="space-y-4">
+                    <!-- Parsed data will be inserted here -->
+                </div>
+                <button id="scan-complete-btn" class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    次のQRコードをスキャン
+                </button>
+            </div>
+        </div>
+
+        <!-- ===== History Modal ===== -->
+        <div id="history-modal" class="hidden modal-overlay">
+            <div class="bg-white rounded-xl shadow-2xl w-11/12 max-w-2xl mx-auto p-6 animate-fade-in-up">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">読み取り履歴</h3>
+                <div class="bg-gray-100 rounded-lg p-3 max-h-80 overflow-y-auto border">
+                    <pre id="history-content" class="text-sm text-gray-700 whitespace-pre-wrap break-all"></pre>
+                </div>
+                <div class="mt-6 flex flex-col sm:flex-row gap-4">
+                    <button id="copy-history-btn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">
+                        履歴をクリップボードにコピー
+                    </button>
+                    <button id="close-history-btn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">
+                        閉じる
+                    </button>
+                </div>
+                 <div id="copy-feedback" class="text-center text-green-600 mt-2 font-semibold hidden">コピーしました！</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Element References ---
+            const scannerView = document.getElementById('scanner-view');
+            const resultView = document.getElementById('result-view');
+            const historyModal = document.getElementById('history-modal');
+            const resultContainer = document.getElementById('result-container');
+            const historyContent = document.getElementById('history-content');
+            const scannerStatus = document.getElementById('scanner-status');
+
+            // --- Buttons ---
+            const showHistoryBtn = document.getElementById('show-history-btn');
+            const scanCompleteBtn = document.getElementById('scan-complete-btn');
+            const closeHistoryBtn = document.getElementById('close-history-btn');
+            const copyHistoryBtn = document.getElementById('copy-history-btn');
+            const copyFeedback = document.getElementById('copy-feedback');
+            
+            let html5QrCode = null;
+
+            // --- Functions ---
+
+            /**
+             * Switches the view between scanner and results.
+             * @param {'scanner' | 'result'} viewName - The view to show.
+             */
+            function switchView(viewName) {
+                if (viewName === 'result') {
+                    scannerView.classList.add('hidden');
+                    resultView.classList.remove('hidden');
+                } else {
+                    scannerView.classList.remove('hidden');
+                    resultView.classList.add('hidden');
+                }
+            }
+
+            /**
+             * Parses the raw QR code text to extract structured information.
+             * This function is based on the example provided and may need adjustments
+             * if the QR code format differs.
+             * @param {string} text - The raw text from the QR code.
+             * @returns {object} An object containing parsed data.
+             */
+            function parseQrText(text) {
+                const data = {
+                    name: '情報なし',
+                    participationType: '情報なし',
+                    socialEvent: '不参加',
+                    luncheons: [],
+                    raw: text
+                };
+
+                const nameMatch = text.match(/氏名:\s*(.*)/);
+                if (nameMatch && nameMatch[1]) {
+                    data.name = nameMatch[1].trim();
+                }
+
+                const typeMatch = text.match(/学術集会参加登録\s*-\s*([^-]+)/);
+                if (typeMatch && typeMatch[1]) {
+                    data.participationType = typeMatch[1].trim();
+                } else {
+                    if (text.includes('一般')) data.participationType = '一般';
+                    if (text.includes('学部生・院生')) data.participationType = '学部生・院生';
+                }
+
+                if (text.includes('懇親会参加登録')) {
+                    data.socialEvent = '参加';
+                }
+
+                const luncheonRegex = /LS-\d+.*?(-|氏名:|$)/g;
+                let match;
+                while ((match = luncheonRegex.exec(text)) !== null) {
+                    let cleanedMatch = match[0].replace(/氏名:.*$/, '').replace(/-$/, '').trim();
+                    data.luncheons.push(cleanedMatch);
+                }
+
+                return data;
+            }
+
+            /**
+             * Renders the parsed data into the result view.
+             * @param {object} data - The parsed data object.
+             */
+            function displayResult(data) {
+                const renderField = (label, value, colorClass = 'text-gray-800') => `
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <p class="text-sm font-semibold text-gray-500">${label}</p>
+                        <p class="text-lg font-bold ${colorClass}">${value}</p>
+                    </div>
+                `;
+
+                let luncheonsHtml = data.luncheons.length > 0
+                    ? data.luncheons.map(l => `<li class="bg-indigo-100 text-indigo-800 p-2 rounded">${l}</li>`).join('')
+                    : '<p class="text-gray-500">参加セミナーなし</p>';
+                
+                if(data.luncheons.length > 0){
+                   luncheonsHtml = `<ul class="space-y-2">${luncheonsHtml}</ul>`;
+                }
+
+                resultContainer.innerHTML = `
+                    ${renderField('氏名', data.name, 'text-blue-700')}
+                    ${renderField('参加形式', data.participationType)}
+                    ${renderField('懇親会', data.socialEvent, data.socialEvent === '参加' ? 'text-green-600' : 'text-red-600')}
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <p class="text-sm font-semibold text-gray-500">参加ランチョンセミナー</p>
+                        ${luncheonsHtml}
+                    </div>
+                `;
+            }
+
+            /**
+             * Saves a scanned record to Web Storage (localStorage).
+             * @param {string} qrText - The raw text from the QR code.
+             */
+            function saveRecordToHistory(qrText) {
+                try {
+                    const timestamp = new Date().toISOString();
+                    localStorage.setItem(`qrScan_${timestamp}`, qrText);
+                } catch (e) {
+                    console.error("履歴の保存に失敗しました:", e);
+                    alert("ブラウザのストレージに空きがないため、履歴を保存できませんでした。");
+                }
+            }
+
+            /**
+             * Loads and displays all records from localStorage.
+             */
+            function showHistory() {
+                const records = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('qrScan_')) {
+                        const timestamp = key.substring(7);
+                        const record = localStorage.getItem(key);
+                        records.push({ timestamp, record });
+                    }
+                }
+                
+                records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+
+                if (records.length === 0) {
+                    historyContent.textContent = '読み取り履歴はありません。';
+                } else {
+                    historyContent.textContent = records.map(r => `[${new Date(r.timestamp).toLocaleString('ja-JP')}]\n${r.record}`).join('\n\n---\n\n');
+                }
+                historyModal.classList.remove('hidden');
+            }
+            
+            /**
+             * Starts the QR code scanner.
+             */
+            function startScanner() {
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("reader");
+                }
+                
+                scannerStatus.textContent = 'カメラを起動中...';
+                
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: (viewfinderWidth, viewfinderHeight) => {
+                            const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.8;
+                            return { width: size, height: size };
+                        }
+                    },
+                    (decodedText, decodedResult) => {
+                        // [FIX] Changed to async function
+                        onScanSuccess(decodedText);
+                    },
+                    (errorMessage) => { /* ignore */ }
+                ).then(() => {
+                    scannerStatus.textContent = 'スキャン待機中';
+                }).catch((err) => {
+                     scannerStatus.textContent = 'カメラの起動に失敗しました。ページを再読み込みするか、カメラの権限を確認してください。';
+                    console.error(`Unable to start scanning, error: ${err}`);
+                });
+            }
+            
+            /**
+             * Stops the QR code scanner.
+             * [FIX] Changed to async function to ensure it completes.
+             */
+            async function stopScanner() {
+                if (html5QrCode && html5QrCode.isScanning) {
+                    try {
+                        await html5QrCode.stop();
+                    } catch (err) {
+                        console.error("Scanner stop failed", err);
+                    }
+                }
+            }
+            
+            /**
+             * Handles successful QR code scans.
+             * [FIX] Made this function async to wait for the scanner to stop.
+             * @param {string} qrText - The decoded text from the QR code.
+             */
+            async function onScanSuccess(qrText) {
+                // [FIX] First, properly stop the scanner and wait for it to complete.
+                await stopScanner();
+                
+                // [FIX] Check if vibrate is supported before calling it.
+                if (navigator.vibrate) {
+                    navigator.vibrate(200); 
+                }
+
+                // Now that the scanner is stopped, perform all other actions.
+                const parsedData = parseQrText(qrText);
+                saveRecordToHistory(qrText);
+                displayResult(parsedData);
+                switchView('result');
+            }
+
+
+            // --- Event Listeners ---
+
+            showHistoryBtn.addEventListener('click', async () => {
+                // [FIX] Wait for scanner to stop before showing history
+                await stopScanner();
+                showHistory();
+            });
+
+            closeHistoryBtn.addEventListener('click', () => {
+                historyModal.classList.add('hidden');
+                copyFeedback.classList.add('hidden');
+                startScanner(); // Restart scanner when closing history
+            });
+            
+            scanCompleteBtn.addEventListener('click', () => {
+                switchView('scanner');
+                startScanner();
+            });
+
+            copyHistoryBtn.addEventListener('click', () => {
+                const textToCopy = historyContent.textContent;
+                if(navigator.clipboard && textToCopy !== '読み取り履歴はありません。') {
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        copyFeedback.classList.remove('hidden');
+                        setTimeout(() => copyFeedback.classList.add('hidden'), 2000);
+                    }).catch(err => {
+                        console.error('クリップボードへのコピーに失敗しました:', err);
+                        try {
+                            const textArea = document.createElement("textarea");
+                            textArea.value = textToCopy;
+                            document.body.appendChild(textArea);
+                            textArea.focus();
+                            textArea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textArea);
+                            copyFeedback.classList.remove('hidden');
+                            setTimeout(() => copyFeedback.classList.add('hidden'), 2000);
+                        } catch (e) {
+                            alert('クリップボードへのコピーに失敗しました。');
+                        }
+                    });
+                }
+            });
+
+            // --- Initial Load ---
+            startScanner();
+        });
+    </script>
+</body>
+</html>
