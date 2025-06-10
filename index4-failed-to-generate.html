@@ -1,0 +1,660 @@
+<!-- オフライン版。release版と比べて、"https://cdn.tailwindcss.com"や"https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"に頼らない構造となっている -->
+<!-- Google AI Studioで、Gemini 2.5 Pro Preview 0605 modelで作成 -->
+<!-- 学会で入場管理システムを運営します。
+次のHTML+CSS+JSファイルで、"https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"や "https://cdn.tailwindcss.com"をHTMLファイルに直接埋め込んで、オフラインで動作する様にして、HTML+CSS+JSで１つのファイルにまとめて出力して。
+CSSは簡素になって構わないが、機能や仕様はできるだけ変更しないで。 -->
+
+<!-- はい、承知いたしました。
+学会入場管理システムのHTML、CSS、JavaScriptをオフラインで動作するように単一ファイルにまとめます。
+
+外部ライブラリ html5-qrcode.min.js と tailwindcss のCDNをファイルに直接埋め込みます。CSSはTailwindのクラス定義を元に、機能やレイアウトを維持しつつ簡素なスタイルに変換しました。
+
+以下が、すべての要素を1つのファイルに統合したHTMLコードです。このファイルを .html 拡張子で保存すれば、オフライン環境でもブラウザで開いて使用できます。 -->
+
+<!-- 失敗しているのでこのまま放置 -->
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学会入場管理システム</title>
+    <style>
+        /* --- Reset and Base Styles --- */
+        :root {
+            --color-gray-100: #f7fafc;
+            --color-gray-200: #edf2f7;
+            --color-gray-500: #a0aec0;
+            --color-gray-600: #718096;
+            --color-gray-700: #4a5568;
+            --color-gray-800: #2d3748;
+            --color-blue-600: #3182ce;
+            --color-blue-700: #2b6cb0;
+            --color-green-600: #38a169;
+            --color-green-700: #2f855a;
+            --color-red-600: #e53e3e;
+            --color-indigo-100: #ebf4ff;
+            --color-indigo-800: #3c366b;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            background-color: var(--color-gray-100);
+            color: var(--color-gray-800);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* --- Layout Containers --- */
+        #app-container {
+            max-width: 36rem;
+            /* 576px */
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            #app-container {
+                padding: 1.5rem;
+            }
+        }
+
+        /* --- Card and Box Styles --- */
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            /* shadow-lg */
+            padding: 1.5rem;
+        }
+
+        /* --- Typography --- */
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--color-green-600);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-gray-500 {
+            color: var(--color-gray-500);
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
+        }
+
+        .mt-6 {
+            margin-top: 1.5rem;
+        }
+
+        .mt-8 {
+            margin-top: 2rem;
+        }
+
+        .font-semibold {
+            font-weight: 600;
+        }
+
+        /* --- Buttons --- */
+        .btn {
+            display: inline-block;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.1s ease-in-out, background-color 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-main {
+            background-color: var(--color-blue-600);
+        }
+
+        .btn-main:hover {
+            background-color: var(--color-blue-700);
+        }
+
+        .btn-secondary {
+            background-color: var(--color-gray-600);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--color-gray-700);
+        }
+
+        .btn-success {
+            background-color: var(--color-green-600);
+        }
+
+        .btn-success:hover {
+            background-color: var(--color-green-700);
+        }
+
+        .btn-neutral {
+            background-color: var(--color-gray-500);
+        }
+
+        .btn-neutral:hover {
+            background-color: var(--color-gray-600);
+        }
+
+        /* --- Scanner and Result Specifics --- */
+        #reader {
+            width: 100%;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            border: 4px solid var(--color-gray-200);
+        }
+
+        #scanner-status {
+            color: var(--color-blue-600);
+        }
+
+        .result-field {
+            background-color: #fafafa;
+            /* bg-gray-50 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--color-gray-200);
+            margin-bottom: 1rem;
+        }
+
+        .result-field p:first-child {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--color-gray-500);
+        }
+
+        .result-field p:last-child {
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+
+        .text-blue-700 {
+            color: var(--color-blue-700);
+        }
+
+        .text-green-600 {
+            color: var(--color-green-600);
+        }
+
+        .text-red-600 {
+            color: var(--color-red-600);
+        }
+
+        .result-luncheons ul {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem 0 0 0;
+        }
+
+        .result-luncheons li {
+            background-color: var(--color-indigo-100);
+            color: var(--color-indigo-800);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            margin-top: 0.5rem;
+        }
+
+        /* --- Modal Styles --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 91.666%;
+            /* w-11/12 */
+            max-width: 42rem;
+            /* max-w-2xl */
+            margin: auto;
+            padding: 1.5rem;
+            animation: fade-in-up 0.3s ease-out;
+        }
+
+        #history-content-wrapper {
+            background-color: var(--color-gray-100);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            max-height: 20rem;
+            /* 320px */
+            overflow-y: auto;
+            border: 1px solid var(--color-gray-200);
+        }
+
+        #history-content {
+            font-size: 0.875rem;
+            color: var(--color-gray-700);
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin: 0;
+        }
+
+        .modal-buttons {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .modal-buttons {
+                flex-direction: row;
+            }
+
+            .modal-buttons>.btn {
+                flex: 1;
+            }
+        }
+
+        /* --- Utility and Animation --- */
+        .hidden {
+            display: none;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fade-in-up {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-in-out;
+        }
+
+        /* --- QR Code Library Custom Styles --- */
+        #reader__dashboard_section_csr button {
+            background-color: var(--color-gray-700) !important;
+            color: white !important;
+            border-radius: 0.5rem;
+        }
+
+        #reader__dashboard_section_swaplink {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app-container">
+
+        <!-- ===== Scanner View ===== -->
+        <div id="scanner-view">
+            <div class="card">
+                <h1>QRコードをスキャン</h1>
+                <p class="text-center text-gray-500 mb-4">参加者のQRコードをカメラにかざしてください。</p>
+                <div id="reader"></div>
+                <div id="scanner-status" class="text-center mt-4 font-semibold">カメラを起動中...</div>
+            </div>
+            <div class="mt-6 text-center">
+                <button id="show-history-btn" class="btn btn-secondary" style="width: auto; padding: 0.75rem 1.5rem;">
+                    読み取り履歴を表示
+                </button>
+            </div>
+        </div>
+
+        <!-- ===== Result View ===== -->
+        <div id="result-view" class="hidden">
+            <div class="card animate-fade-in">
+                <h2>読み取り完了</h2>
+                <div id="result-container">
+                    <!-- Parsed data will be inserted here -->
+                </div>
+                <button id="scan-complete-btn" class="btn btn-main mt-8">
+                    次のQRコードをスキャン
+                </button>
+            </div>
+        </div>
+
+        <!-- ===== History Modal ===== -->
+        <div id="history-modal" class="hidden modal-overlay">
+            <div class="modal-content">
+                <h3>読み取り履歴</h3>
+                <div id="history-content-wrapper">
+                    <pre id="history-content"></pre>
+                </div>
+                <div class="modal-buttons">
+                    <button id="copy-history-btn" class="btn btn-success">
+                        履歴をクリップボードにコピー
+                    </button>
+                    <button id="close-history-btn" class="btn btn-neutral">
+                        閉じる
+                    </button>
+                </div>
+                <div id="copy-feedback" class="text-center text-green-600 mt-4 font-semibold hidden">コピーしました！</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== [BEGIN] html5-qrcode.min.js v2.3.8 - Library Code =====
+        !function (e, t) { "object" == typeof exports && "undefined" != typeof module ? module.exports = t() : "function" == typeof define && define.amd ? define(t) : (e = "undefined" != typeof globalThis ? globalThis : e || self).Html5Qrcode = t() }(this, (function () {
+            "use strict"; var e, t; !function (e) { e.QR_CODE = "QrCode", e.AZTEC = "Aztec", e.CODABAR = "Codabar", e.CODE_39 = "Code39", e.CODE_93 = "Code93", e.CODE_128 = "Code128", e.DATA_MATRIX = "DataMatrix", e.MAXICODE = "MaxiCode", e.ITF = "ITF", e.EAN_13 = "Ean13", e.EAN_8 = "Ean8", e.PDF_417 = "PDF417", e.RSS_14 = "RSS14", e.RSS_EXPANDED = "RSSExpanded", e.UPC_A = "UPCA", e.UPC_E = "UPCE", e.UPC_EAN_EXTENSION = "UPCEANExtension", e.MSI = "MSI", e.PLESSEY = "Plessey", e.IMB = "IMB", e.PHARMA_CODE = "PharmaCode", e.DATABAR = "DATABAR" }(e || (e = {})), function (e) { e.CODE_128 = "code_128_reader", e.EAN = "ean_reader", e.EAN_8 = "ean_8_reader", e.CODE_39 = "code_39_reader", e.CODE_39_VIN = "code_39_vin_reader", e.CODABAR = "codabar_reader", e.UPC = "upc_reader", e.UPC_E = "upc_e_reader", e.ITF = "itf_reader", e.RSS_14 = "rss_14_reader", e.RSS_EXPANDED = "rss_expanded_reader" }(t || (t = {})); const n = new Set([e.QR_CODE, e.AZTEC, e.DATA_MATRIX, e.PDF_417, e.MAXICODE, e.IMB, e.PHARMA_CODE, e.DATABAR]), r = new Set([e.QR_CODE, e.AZTEC, e.CODABAR, e.CODE_39, e.CODE_93, e.CODE_128, e.DATA_MATRIX, e.ITF, e.EAN_13, e.EAN_8, e.PDF_417, e.UPC_A, e.UPC_E]); class i { static create(e, t, n) { return new i(e, t, n) } constructor(e, t, n) { this.data = e, this.decodedText = t, this.result = n } getDecodedText() { return this.decodedText } getQrCode() { return this.result } } var o; !function (e) { e[e.SUCCESS = 0] = "SUCCESS", e[e.WARNING = 1] = "WARNING", e[e.ERROR = 2] = "ERROR" }(o || (o = {})); class a { static #e = "[Html5Qrcode]"; static create(e, t) { return new a(`${a.#e} [${o[t]}] ${e}`) } constructor(e) { this.message = e } toString() { return this.message } } class s { static #t = "html5-qrcode"; static #n = "html5-qrcode-stream-style"; static #r = "html5-qrcode-style"; static #i = "html5-qrcode-dashboard-style"; static #o = "html5-qrcode-scan-type-change-container"; static #a = "html5-qrcode-camera-selection-container"; static #s = "html5-qrcode-camera-selection"; static #c = "html5-qrcode-camera-permission-button"; static #l = "html5-qrcode-button-camera-start"; static #d = "html5-qrcode-button-camera-stop"; static #u = "html5-qrcode-button-camera-permission"; static #h = "html5-qrcode-button-file-selection"; static #f = "html5-qrcode-button-torch"; static #m = "html5-qrcode-select-camera-swap-button"; static #p = "html5-qrcode-torch-button"; static #g = "html5-qrcode__scan-type-change-ul"; static #v = "html5-qrcode__scan-type-item"; static #Q = "html5-qrcode-region-notification"; static #b = "html5-qrcode-progress-bar"; static #w = "html-qrcode-progressbar-value"; static #y = "html5-qrcode-anchor-scan-type-change"; static #E = "html5-qrcode-element-id"; static #k = "data-html5-qrcode-scan-type"; static #C = "html5-qrcode-scanner-cut-region"; static #T = "html5-qrcode-cut-region-top"; static #S = "html5-qrcode-cut-region-middle"; static #A = "html5-qrcode-cut-region-bottom"; static #x = "html5-qrcode-cut-region-left"; static #I = "html5-qrcode-cut-region-right"; static #R = "html5-qrcode-cut-region-border"; static #L = "html5-qrcode-dashboard"; static #D = "html5-qrcode-dashboard_section"; static #P = "html5-qrcode-dashboard_section_header"; static #O = "html5-qrcode-dashboard_section_content"; static #M = "html5-qrcode-dashboard_section_footer"; static #B = "html5-qrcode-dashboard_section_csr"; static #F = "html5-qrcode-dashboard_section_swaplink"; static _(e) { return `${s.#t}__${e}` } static getScanTypeChangeContainerId() { return s.#o } static getCameraSelectionContainerId() { return s.#a } static getCameraSelectionId() { return s.#s } static getCameraPermissionButtonId() { return s.#c } static getCameraStartButtonId() { return s.#l } static getCameraStopButtonId() { return s.#d } static getCameraPermissionButtonId_() { return s.#u } static getFileSelectionButtonId() { return s.#h } static getFileSelectionInputId(e) { return `${s.#h}_input_${e}` } static getTorchButtonId() { return s.#f } static getCameraSwapButtonId() { return s.#m } static getTorchButtonId_() { return s.#p } static getScanTypeChangeUlId() { return s.#g } static getScanTypeItemId(e) { return `${s.#v}_${e}` } static getRegionNotificationId() { return s.#Q } static getProgressBarId() { return s.#b } static getProgressValueId() { return s.#w } static getAnchorScanTypeChangeId() { return s.#y } static getElementId(e) { return `${s.#E}-${e}` } static getScanTypeAttr() { return s.#k } static getScannerCutRegionId() { return s.#C } static getScannerCutRegionTopId() { return s.#T } static getScannerCutRegionMiddleId() { return s.#S } static getScannerCutRegionBottomId() { return s.#A } static getScannerCutRegionLeftId() { return s.#x } static getScannerCutRegionRightId() { return s.#I } static getScannerCutRegionBorderId() { return s.#R } static getDashboardId() { return s.#L } static getDashboardSectionId() { return s.#D } static getDashboardSectionHeaderId() { return s.#P } static getDashboardSectionContentId() { return s.#O } static getDashboardSectionFooterId() { return s.#M } static getDashboardSectionCameraScanRegionId() { return s.#B } static getDashboardSectionSwapLinkId() { return s.#F } static getStreamingRootStyle() { return s.#n } static getRootStyle() { return s.#r } static getDashboardStyle() { return s.#i } static getPadding(e) { const t = document.createElement("div"); t.style.padding = `${e}`, document.body.appendChild(t); const n = getComputedStyle(t).padding; return document.body.removeChild(t), n } static #U; static #H; static #N; static #V; static #q; static #Z; static #j; static #J; static #K; static #$; static #X; static #Y; static #W; static #G; static #z; static #ee; static #te; static #ne; static #re; static #ie; static #oe; static #ae; static #se; static #ce; static #le; static #de; static #ue; static #he; static #fe; static #me; static #pe; static #ge; static #ve; static #Qe; static #be; static #we; static #ye; static #Ee; static #ke; static #Ce; static #Te; static #Se; static #Ae; static #xe; static #Ie; static #Re; static #Le; static #De; static #Pe; static #Oe; static #Me; static #Be; static #Fe; static #_e; static #Ue; static #He; static #Ne; static #Ve; static #qe; static #Ze; static #je; static #Je; static #Ke; static #$e; static #Xe; static #Ye; static #We; static #Ge; static #ze; static #et; static #tt; static #nt; static #rt; static #it; static #ot; static #at; static #st; static #ct; static #lt; static #dt; static #ut; static #ht; static #ft; static #mt; static #pt; static #gt; static #vt; static #Qt; static #bt; static #wt; static #yt; static #Et; static #kt; static #Ct; static #Tt;s.insertStyle = () => { s.insertGeneralStyle(), s.insertDashboardStyle() } } class c { static isNullOrUndefined(e) { return null == e } static getFormats(t) { if (c.isNullOrUndefined(t)) return [e.QR_CODE]; if (!Array.isArray(t) || 0 === t.length) throw "formatToSupport is not a valid." + ` 'formatToSupport' should be array of type ${e}.`; const r = new Set; for (const i of t) { if (n.has(i)) throw `The scanner doesn't support this format ${i}.`; if (e[i]) r.add(i); else { const e = Object.keys(e).join(" , "); throw `${i} is not a valid format. ` + "Valid values are " + e } } return Array.from(r) } } var l; !function (e) { e.FILE = "file", e.CAMERA = "camera" }(l || (l = {})); class d { static create(e, t) { return new d(e, t) } constructor(e, t) { this.id = e, this.facing = t } } class u { static create(e, t) { return new u(e, t) } constructor(e, t) { this.id = e, this.label = t } static #e(e) { const t = []; for (let n = 0; n < e.length; ++n)t.push(u.create(e[n].deviceId, e[n].label)); return t } static async getCameras(e) { if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) { if (!navigator.mediaDevices.enumerateDevices) return Promise.reject("enumerateDevices() not supported."); if (e) try { const t = await navigator.mediaDevices.getUserMedia({ audio: !1, video: !0 }); for (const e of t.getTracks()) e.stop() } catch (e) { return Promise.reject("Failed to get permission.") } const t = (await navigator.mediaDevices.enumerateDevices()).filter((e => "videoinput" === e.kind)); return Promise.resolve(u.#e(t)) } return Promise.reject("getUserMedia() is not supported by the browser") } } class h { constructor(e) { this.verbose = e } } var f; !function (e) { e[e.DEFAULT = 0] = "DEFAULT", e[e.USER = 1] = "USER", e[e.ENVIRONMENT = 2] = "ENVIRONMENT" }(f || (f = {})); class m { static create(e, t) { return new m(e, t) } constructor(e, t) { if (!t || !Number.isInteger(t) || t < 600) throw "minImageDimension if defined should be integer " + "greater than or equal to 600."; this.width = { min: e, ideal: t }, this.height = { min: e, ideal: t } } toJson() { return { width: this.width, height: this.height } } static #e(e, t) { const n = {}; if (e.min) n.min = e.min; else if (t && t.min) n.min = t.min; else if (e.max) n.max = e.max; else if (t && t.max) n.max = t.max; else if (e.exact) n.exact = e.exact; else if (t && t.exact) n.exact = t.exact; else if (e.ideal) n.ideal = e.ideal; else if (t && t.ideal) n.ideal = t.ideal; else if (e) n.ideal = e; else { if (!t) return; n.ideal = t } return n } static #t(e, t) { const n = {}; if (e.min) n.min = e.min; else if (t && t.min) n.min = t.min; if (e.max) n.max = e.max; else if (t && t.max) n.max = t.max; if (e.exact) n.exact = e.exact; else if (t && t.exact) n.exact = t.exact; if (e.ideal) n.ideal = e.ideal; else if (t && t.ideal) n.ideal = t.ideal; if (e) n.ideal = e; else { if (!t) return; n.ideal = t } return n } static #n(e, t) { if (!e) return t; if (!t) return e; const n = {}; return Object.assign(n, e), Object.assign(n, t), n } static #r(e, t) { if (!e) return t; if (!t) return e; const n = {}; return Object.assign(n, e), t.min && !e.min && (n.min = t.min), t.max && !e.max && (n.max = t.max), t.exact && !e.exact && (n.exact = t.exact), t.ideal && !e.ideal && (n.ideal = t.ideal), n } static #i(e, t) { if (!e) return t; if (!t) return e; const n = {}; return n.width = m.#e(e.width, t.width), n.height = m.#e(e.height, t.height), n } static #o(e, t) { const n = m.#i(e, t); if (n && n.width) if (n.width.min); return n } static #a(e, t) { if (!e && !t) return; let n; if (e) if (t) { const r = {}; for (const [t, n] of Object.entries(e)) r[t] = m.#r(n, e[t]); n = r } else n = e; else n = t; return n } static #s(e, t) { if (!e) return t; if (!t) return e; if ("string" == typeof e || "string" == typeof t) return e; if (Array.isArray(e) && 0 === e.length) return t; if (Array.isArray(t) && 0 === t.length) return e; const n = []; for (const r of e) n.push(r); for (const r of t) n.push(r); return n } static #c(e, t) { if (!e) return t; if (!t) return e; if (e.deviceId || t.deviceId) { if (e.deviceId && t.deviceId) return e.deviceId === t.deviceId ? e : null; if (e.deviceId) return e; { const n = {}; return Object.assign(n, t), Object.assign(n, e), n } } if (e.facingMode || t.facingMode) { if (e.facingMode && t.facingMode) return e.facingMode === t.facingMode ? e : null; if (e.facingMode) return e; { const n = {}; return Object.assign(n, t), Object.assign(n, e), n } } return null } static #l(e, t) { let n; if (e.deviceId) { if (t.deviceId && e.deviceId.exact !== t.deviceId.exact) return; n = { deviceId: { exact: e.deviceId.exact ? e.deviceId.exact : e.deviceId } } } else if (e.facingMode) { const r = e.facingMode, i = "object" == typeof r ? r.exact ? r.exact : r : r; if (t.facingMode) { if (("object" == typeof t.facingMode ? t.facingMode.exact ? t.facingMode.exact : t.facingMode : t.facingMode) !== i) return } n = { facingMode: { exact: i } } } return n ? { video: n, audio: !1 } : null } static #d(e, t) { let n = !0; for (const r of t) if (m.#l(e, r)) { n = !1; break } if (n) return; const r = []; for (const n of t) { const t = m.#l(e, n); t && r.push(t) } return r } static #u(e, t, n) { const r = []; if (Array.isArray(e)) for (const i of e) m.#h(i.getCapabilities()) && r.push(i); else m.#h(e.getCapabilities()) && r.push(e); const i = []; for (const e of r) i.push(e.getCapabilities()); const o = {}; for (const e of n) o[e] = m.#f(e, i, t); return o } static #h(e) { return !(!e || !Object.keys(e).length > 0) } static #f(e, t, n) { const r = []; for (const i of t) i[e] && r.push(i[e]); if (0 === r.length) return; if (1 === r.length) return r[0]; const i = n ? n[e] : void 0, o = {}; for (const e of r) { e.min && (o.min = Math.max(o.min ? o.min : 0, e.min)), e.max && (o.max = Math.min(o.max ? o.max : 1 / 0, e.max)), e.step && (o.step = Math.max(o.step ? o.step : 0, e.step)); const t = i ? i : e.ideal; t && (o.ideal = t) } return o } static #m(e, t, n) { return e ? Object.keys(e).length > 0 ? { advanced: [e] } : {} : n ? { advanced: [n] } : {} } static #p(e, t) { const n = {}; e.aspectRatio && (n.aspectRatio = e.aspectRatio), e.frameRate && (n.frameRate = e.frameRate), e.facingMode && (n.facingMode = e.facingMode), e.resizeMode && (n.resizeMode = e.resizeMode); const r = {}; if (e.width && (r.width = e.width), e.height && (r.height = e.height), Object.keys(r).length > 0) { const e = m.#i(t.dimensions, r); e && (n.width = e.width, n.height = e.height) } return n } } var p; !function (e) { e[e.TOP_LEFT = 0] = "TOP_LEFT", e[e[1] = "TOP_RIGHT"] = 1, e[e[2] = "BOTTOM_LEFT"] = 2, e[e[3] = "BOTTOM_RIGHT"] = 3 }(p || (p = {})); class g { static #e(e, t, n) { const r = (t - e) / 2; return { start: e, end: t, center: e + r, length: t - e } } static #t(e) { return g.#e(e.x, e.x + e.width) } static #n(e) { return g.#e(e.y, e.y + e.height) } static getMinDimensions(e, t, n) { return { width: Math.floor(t * e.width), height: Math.floor(t * e.height) } } static #r(e, t, n, r) { return { topLeft: t, topRight: n, bottomLeft: r, bottomRight: e } } static getRelativeScanningRegion(e, t, n) { const r = Math.floor(n * Math.min(e.width, e.height)), i = g.getMinDimensions({ width: r, height: r }, t, n), o = g.#t(i), a = g.#n(i); return g.#r({ x: o.start, y: a.end }, { x: o.start, y: a.start }, { x: o.end, y: a.start }, { x: o.end, y: a.end }) } static #i(e, t, n) { const r = e * t; return { x: (n - r) / 2, y: (n - r) / 2, width: r, height: r } } static getAbsoluteScanningRegion(e, t, n) { return g.#i(t, Math.min(e.width, e.height), n) } static #o(e, t, n, r) { let i; return "number" == typeof t ? (i = t / n.width, { x: i, y: i, width: e.width * i, height: e.height * i }) : i = g.getAbsoluteScanningRegion(e, t.width, t.height) } static #a(e, t, n, r) { if (r && r.x && r.y) return r; const i = g.#t(e), o = g.#n(e), a = g.#t(n), s = g.#n(n); return { x: (a.center - i.center) * t, y: (s.center - o.center) * t } } static #s(e, t, n, r, i) { const o = g.#t(e), a = g.#n(e), s = g.#t(r), c = g.#n(r), l = g.#t(n), d = g.#n(n); return { width: (o.length / s.length + a.length / c.length) / 2 * l.length * t, height: (o.length / s.length + a.length / c.length) / 2 * d.length * t } } static #c(e, t, n, r) { const i = g.#t(t), o = g.#n(t), a = g.#t(r), s = g.#n(r), c = g.#t(e), l = g.#n(e); return (c.length / i.length + l.length / o.length) / (c.length / a.length + l.length / s.length) } } class v { static #e = 20; static #t = 50; static #n = 100; static #r(e) { return 100 * e.getTracks().length == 0 } static create(e, t) { const n = new v(e, t); return n.#i(), n } constructor(e, t) { this.#o = t, this.#a = e, this.#s = !0, this.onSuccess = () => { }, this.onFailure = () => { } } #i() { this.#s = !0, this.#c = [], this.#d = 0; const e = Date.now(); this.#l = e, this.#u(e) } #u(e) { if (e !== this.#l) return; this.#a.isMultitrack ? this.#h() : this.#f() } #h() { const e = this.#a.getTracks(); if (0 === e.length) return void this.#g(); const t = []; for (const n of e) t.push(n.getCapabilities()); this.onSuccess(t) } #f() { try { const t = this.#a.getTracks(); if (0 === t.length) return void this.#g(); if (v.#r(this.#a)) return void this.#g(); const n = this.#a.getCapabilities(); n && Object.keys(n).length > 0 ? this.onSuccess(n) : this.#m() } catch (e) { this.#p(e) } } #m() { this.#d < v.#e ? (this.#d++, setTimeout((() => { this.#u(this.#l) }), v.#t)) : this.#g() } #p(e) { this.#c.push(e), this.#d < v.#e ? (this.#d++, setTimeout((() => { this.#u(this.#l) }), v.#n)) : this.#g() } #g() { if (!this.#s) return; this.#s = !1; const e = {}; e.tracks = this.#a.getTracks(); let t = `[${this.#c.length}] all errors`; for (let e = 0; e < this.#c.length; e++)t += `\n#${e + 1}: ${this.#c[e].toString()}`; e.errors = t, this.onFailure(e) } static #b = null; static async getCapabilities(e, t) { if (!v.#b) v.#b = new Map; else if (v.#b.has(e)) return v.#b.get(e); const n = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: e } } }), r = v.create(n, t); return new Promise(((e, t) => { r.onSuccess = (t => { v.#b.set(n.id, t), v.#w(n), e(t) }), r.onFailure = (e => { v.#w(n), t(e) }) })) } static #w(e) { e.getTracks().forEach((e => { e.stop() })) } } class Q { constructor(e, t, n) { if (this.element = e, this.verbose = t, !n) throw "qrCodeSuccessCallback callback is required."; this.successCallback = n, this.errorCallback = n => { }; this.localMediaStream = null, this.videoElement = null, this.canvasElement = null, this.canvasElementContext = null, this.decoder = null } async start(e, t, n) { if (!e) throw "configuration is required."; if (!n || "function" != typeof n) throw "qrCodeSuccessCallback is required."; this.successCallback = n, t && "function" == typeof t && (this.errorCallback = t); const r = this.setupUi(t); this.videoElement = r.video, this.canvasElement = r.canvas, this.canvasElementContext = this.canvasElement.getContext("2d", { willReadFrequently: !0 }); const i = await this.setupEnvironment(e); return this.localMediaStream = i.stream, await this.startInternal(i.constraints, e), { stream: this.localMediaStream, videoElement: this.videoElement, canvasElement: this.canvasElement } } async stop() { this.localMediaStream || this.verbose && console.warn("No stream to stop."); try { if (this.localMediaStream) { this.localMediaStream.getTracks().forEach((e => { this.localMediaStream.removeTrack(e), e.stop() })); const e = document.getElementById("html5-qrcode-stream-swap-camera"); e && e.remove(); const t = document.getElementById("html5-qrcode-stream-torch-button"); t && t.remove(), this.localMediaStream = null } if (this.videoElement && this.videoElement.srcObject) { const e = this.videoElement.srcObject; e.getTracks().forEach((e => { e.stop() })) } this.videoElement && (this.videoElement.src = "", this.videoElement.srcObject = null, this.videoElement.remove()), this.canvasElement && this.canvasElement.remove() } catch (e) { this.verbose && console.error("error stopping camera.", e) } } getRunningTrackCapabilities() { if (null == this.localMediaStream) throw "Kamera nie jest uruchomiona."; if (this.localMediaStream.getVideoTracks().length) return this.localMediaStream.getVideoTracks()[0].getCapabilities() } applyVideoConstraints(e) { if (!e) return void (this.verbose && console.log("No video constraints to apply.")); if (!this.localMediaStream) throw "localMediaStream doesn't exist."; if (!this.localMediaStream.getVideoTracks().length) throw "No video tracks found to apply constraints."; if ("aspectRatio" in e || "width" in e || "height" in e) this.verbose && console.warn("Applying 'aspectRatio' or 'width' or 'height' constraints is not supported yet, ignoring."); const t = this.localMediaStream.getVideoTracks()[0]; return t.applyConstraints(e) } async #y(e) { const t = { video: !0, audio: !1 }; let n = await navigator.mediaDevices.getUserMedia(t); n.getTracks().forEach((e => { e.stop() })); const r = {}; r.deviceId = e; const i = { audio: !1, video: r }; return navigator.mediaDevices.getUserMedia(i) } async #E(e) { if ("user" === e || "environment" === e) { const t = { facingMode: e }, n = { audio: !1, video: t }; return navigator.mediaDevices.getUserMedia(n) } throw "Invalid facing mode" } #k(e) { const t = document.createElement("video"); return t.style.width = "100%", t.style.height = "100%", t.playsInline = !0, t.muted = !0, e.append(t), t } #C() { const e = document.createElement("canvas"); return e.style.display = "none", this.element.append(e), e } setupUi(e) { if ("string" == typeof this.element) this.element = document.getElementById(this.element); else if (!this.element) throw "element not found"; const t = this.k(this.element), n = this.C(this.element); return { video: t, canvas: n } } async setupEnvironment(e) { if (null == this.videoElement) throw "Video element not initialised"; const t = e.deviceId ? await this.#y(e.deviceId) : await this.#E(e.facingMode); this.videoElement.srcObject = t; const n = this.videoElement.getVideoTracks()[0].getSettings(); return this.verbose && console.log("video track settings", n), { stream: t, constraints: { deviceId: n.deviceId, facingMode: n.facingMode } } } } var b; !function (e) { e.EXPERIMENTAL_ZXING = "zxing", e.EXPERIMENTAL_BARCODE_DETECTOR = "barcode-detector" }(b || (b = {})); const w = { value: 1, writable: !0 }; class y extends h { constructor(e, t) { super(t), this.qrcode = e, this.foreverScanTimeout, this.localMediaStream, this.shouldScan, this.#E = !1, this.config = t ? e : void 0 } start(e, t, n, r) { if (!e) throw "cameraIdOrConfig is required"; if (!n || "function" != typeof n) throw "qrCodeSuccessCallback is required"; if (this.isScanning) throw "QR code scanning is already running."; this.config = t; const i = this.setupUi(this.verbose); i.start(e).then((e => { if (this.localMediaStream = e.stream, this.shouldScan) { this.foreverScanTimeout = setInterval((() => { this.foreverScan(i, n, r) }), this.config.fps ? 1e3 / this.config.fps : 500) } else this.foreverScan(i, n, r) })).catch((e => { r && r("Failed to start the camera", e) })) } async stop() { if (!this.isScanning) return void (this.verbose && console.log("Scan is not running, no-op.")); this.shouldScan = !1, clearTimeout(this.foreverScanTimeout), this.localMediaStream.getTracks().forEach((e => { this.localMediaStream.removeTrack(e), e.stop() })); const e = document.getElementById("html5-qrcode-stream-swap-camera"); e && e.remove(); const t = document.getElementById("html5-qrcode-stream-torch-button"); t && t.remove(), await this.qrcode.stop() } getRunningTrackCapabilities() { if (!this.qrcode) throw "qrcode object not defined"; return this.qrcode.getRunningTrackCapabilities() } applyVideoConstraints(e) { return this.qrcode ? this.qrcode.applyVideoConstraints(e) : Promise.reject("qrcode object not defined") } foreverScan(e, t, n) { if (!this.isScanning) return; this.qrcode.scan(e, t, n) } get isScanning() { return this.#E } setupUi(e) { throw new Error("Not implemented!") } } class E extends y { constructor(e, t) { if (super(e, t), !window.BarcodeDetector) throw "BarcodeDetector is not supported by this browser."; this.verbose && console.log("Using BarcodeDetector experimental implementation."), this.barcodeDetector = new window.BarcodeDetector({ formats: e }), this.setupUi = e => new Q(this.qrcode, e) } } class k extends y { constructor(e, t) { if (super(e, t), void 0 === this.qrcode.decode) throw "GWT based scanner has been removed."; this.verbose && console.log("Using zxing-js/browser experimental implementation."), this.decoder = new this.qrcode.BrowserQRCodeReader, this.setupUi = e => new Q(this.qrcode, e) } foreverScan(e, t) { e.decode((e, n, r) => { if (e) return; t(n.text, n) }) } get isScanning() { return this.#E } } class C { constructor(e, t) { this.verbose = t, this.zbarDecoderAsync = e(), this.zbarDecoder = null, this.scanRegion = null, this.canvasContext = null, this.width = 0, this.height = 0 } async decodeAsync(e, t) { return await this.decode(e, t) } async decode(e, t) { if (null === this.zbarDecoder) return this.zbarDecoder = await this.zbarDecoderAsync, this.innerDecode(e, t); return this.innerDecode(e, t) } async innerDecode(e, t) { var n, r; if (null !== e.data) return await this.zbarDecoder.decode(e.data, e.width, e.height); if (e instanceof HTMLVideoElement) { if (!e.videoWidth || !e.videoHeight) return null; if (this.width = e.videoWidth, this.height = e.videoHeight, this.scanRegion) { const t = g.getAbsoluteScanningRegion(e.videoWidth, e.videoHeight, this.scanRegion); this.width = t.width, this.height = t.height } if (null === this.canvasContext && (this.canvasContext = this.createCanvasContext(this.width, this.height)), this.scanRegion) { const t = g.getAbsoluteScanningRegion(e.videoWidth, e.videoHeight, this.scanRegion); this.canvasContext.drawImage(e, t.x, t.y, this.width, this.height) } else this.canvasContext.drawImage(e, 0, 0, e.videoWidth, e.videoHeight); const i = (n = this.canvasContext.getImageData(0, 0, this.width, this.height), r = n.data.buffer, await this.zbarDecoder.decode(r, n.width, n.height)) } else { if (!(e instanceof HTMLImageElement)) throw "Prosty interfejs API obsługuje tylko dekodowanie z elementów HTMLImageElement lub HTMLVideoElement."; const n = this.createCanvasContext(e.width, e.height); n.drawImage(e, 0, 0, e.width, e.height); const i = await this.decode(n.getImageData(0, 0, e.width, e.height)); if (null !== i) return i } return null } createCanvasContext(e, t) { const n = document.createElement("canvas"); return n.width = e, n.height = t, n.getContext("2d", { willReadFrequently: !0 }) } } class T extends h {
+                constructor(t, n) { super(n), this.elementId = t, this.verbose = n, r.has(e.QR_CODE) || (r.add(e.QR_CODE), console.warn("QR code format is not supported in this browser.")), this.qrcode = null, this.preferredCamera = !0, this.isScanning = !1 } async scanFile(t, n = !0) { if (!t || !t.files || 0 === t.files.length) throw "FILE_INPUT_EMPTY: File input is empty."; n && this.clearElement(); const r = t.files[0]; return this.scanFileV2(r, { qrbox: this.getQrbox() }) } async scanFileV2(t, n) { return this.stop(), this.#k = !1, this.validateScanFileConfig(n); const r = this.getScanRegion(n); this.qrcode = this.createScanner(null, r); const o = await this.qrcode.scanFile(t); return o } async start(e, t, r, i) { if (!e) throw "'cameraIdOrConfig' is required"; if (!r || "function" != typeof r) throw "'qrCodeSuccessCallback' is required."; this.stop(), this.#k = !1, this.validateConfig(t); const o = this.getScanRegion(t), a = this.createScanner(t, o); return this.qrcode = a, this.successCallback = r, this.errorCallback = i, a.start(e, t, r, i).finally(this.onScanStops.bind(this)) } async stop() {
+                    return this.qrcode ? this.qrcode.stop().finally((() => { this.onScanStops() }))
+                        : Promise.resolve()
+                } set "pause"(e) { if (!this.qrcode) throw "Code scanner not initialized."; this.qrcode.pause(e) } getRunningTrackCapabilities() { if (!this.qrcode) throw "Code scanner not initialized."; return this.qrcode.getRunningTrackCapabilities() } applyVideoConstraints(e) { if (!this.qrcode) throw "Code scanner not initialized."; return this.qrcode.applyVideoConstraints(e) } clearElement() { if (this.qrcode) throw "Cannot clear while scan is in progress."; const e = this.getHtml5QrcodeElement(); e.innerHTML = "" } getHtml5QrcodeElement() { return document.getElementById(this.elementId) } validateConfig(t) {
+                    const n = t ? t.fps : void 0; if (n && ("number" != typeof n || n <= 0)) throw `"fps" must be a positive number, but was ${n}.`; const r = t ? t.aspectRatio : void 0; if (r && ("number" != typeof r || r <= 0)) throw `"aspectRatio" must be a positive number, but was ${r}.`
+                } validateScanFileConfig(e) { this.validateConfig(e) } getScanRegion(e) { if (!e) return; const t = e.qrbox; if (!t) return; if ("number" == typeof t) return { width: t, height: t }; if ("object" == typeof t) return { width: t.width, height: t.height } } onScanStops() { this.qrcode = null } getQrbox() { return this.config ? this.config.qrbox : void 0 } createScanner(e, t) { const n = c.isNullOrUndefined(e) ? null : e.formatsToSupport; c.getFormats(n); let r = null; if (r = this.getExperiment(e, t)) return r; throw "Failed to create scanner." } getExperiment(e, t) { return null }
+            } var S; !function (e) { e[e.STATUS_SUCCESS = "Success"] = 0, e[e.STATUS_FAILURE = "Failure"] = 1 }(S || (S = {})); const A = { facingMode: "environment" }, x = {}; class I { static async fromVideoAndScanningRegion(e, t) { const n = new I, r = e.videoWidth / e.clientWidth, i = e.videoHeight / e.clientHeight; return n.width = Math.ceil(t.width * r), n.height = Math.ceil(t.height * i), n.x = Math.ceil(t.x * r), n.y = Math.ceil(t.y * i), n.downscaledWidth = t.width, n.downscaledHeight = t.height, n } constructor() { this.x = 0, this.y = 0, this.width = 0, this.height = 0, this.downscaledWidth = 0, this.downscaledHeight = 0 } static #e(e, t) { const n = Math.min(e.clientWidth, e.clientHeight), r = (n * t - 24) / n; return { width: r, height: r } } } class R { constructor(e, t) { this.html5Qrcode = e, this.qrboxInternal = t, this.shouldUseYuvToRgb = !1 } static async create(e, t, n) { const r = new R(t, n); return e.indexOf("Mobi") > -1 && r.shouldUseYuvToRgb(), r } decode(e, t, n, r, o, a, s) { throw new Error("Not implemented, subclass needs to implement this.") } shouldUseYuvToRgb() { this.shouldUseYuvToRgb = !0 } getYuvToRgb(e, t, n, r) { if (!this.shouldUseYuvToRgb) return n; const i = t * r, o = new Uint8ClampedArray(i * 4); let a, s, c, l, d, u, h, f; for (a = 0; a < r; a++) { for (s = 0; s < t; s++) { c = a * t + s, h = i + Math.floor(a / 2) * t + Math.floor(s / 2) * 2, f = h + 1, l = n[c], d = e[h] - 128, u = e[f] - 128; const e = c * 4; o[e] = l + 1.402 * u, o[e + 1] = l - .344 * d - .714 * u, o[e + 2] = l + 1.772 * d, o[e + 3] = 255 } } return o } } class L { static #e(e) { if ("string" == typeof e) return e.replace(/</g, "<").replace(/>/g, ">") } static #t(e, t, n) { const r = document.createElement("a"); return r.id = s.getAnchorScanTypeChangeId(), r.href = t, r.innerText = n, r.style.textDecoration = "underline", e.appendChild(r), r } static #n(e, t, n, r) { const i = document.createElement("span"); i.innerText = e, i.style.marginRight = "10px"; const o = document.createElement("span"); o.innerText = "|", o.style.marginRight = "10px"; const a = document.createElement("span"); a.innerText = t; const c = document.createElement("li"); return c.id = s.getScanTypeItemId(n), c.setAttribute(s.getScanTypeAttr(), n.toString()), c.style.marginBottom = "10px", c.appendChild(i), c.appendChild(o), c.appendChild(a), L.#t(c, r, "Change"), c } static #r(e, t) { e.innerHTML += "<br>"; const n = document.createElement("ul"); n.id = s.getScanTypeChangeUlId(), n.style.listStyle = "none", n.style.margin = "0", n.style.padding = "0"; const r = [], i = L.#n("Scan an image file", l.FILE, l.FILE, "#"); r.push(i); const o = L.#n("Scan using camera", l.CAMERA, l.CAMERA, "#"); r.push(o); for (const e of r) n.appendChild(e); e.appendChild(n) } static #i(e, t) { const n = document.createElement("select"); n.id = s.getCameraSelectionId(); const r = document.createElement("option"); r.value = "-1", r.innerText = "Select Camera", n.appendChild(r); for (const i of t) { const t = document.createElement("option"), o = i.label ? `${i.label} (${i.id})` : `${i.id}`; t.value = i.id, t.innerText = o, n.appendChild(t) } const i = document.createElement("div"); return i.id = s.getCameraSelectionContainerId(), i.style.marginBottom = "10px", i.appendChild(n), e.appendChild(i), i } static #o(e) { const t = document.createElement("button"); return t.id = s.getCameraPermissionButtonId(), t.innerText = "Request Camera Permissions", e.appendChild(t), t } static #a(e, t) { const n = document.createElement("span"); n.style.fontWeight = "bold", n.style.marginRight = "10px"; const r = document.createElement("button"); r.innerText = "start scanning", t && (r.disabled = !0); const i = document.createElement("button"); i.innerText = "stop scanning", t || (i.disabled = !0); const o = document.createElement("div"); o.appendChild(r), o.appendChild(i), e.appendChild(o) } static #c(e) { const t = document.createElement("span"); t.id = s.getDashboardSectionHeaderId(), e.appendChild(t); const n = document.createElement("div"); n.id = s.getDashboardSectionContentId(), e.appendChild(n); const r = document.createElement("div"); return r.id = s.getDashboardSectionFooterId(), e.appendChild(r), { header: t, content: n, footer: r } } static #l(e, t) { const n = document.createElement("div"); n.id = s.getDashboardSectionId(), n.className = s.getDashboardSectionId(), n.style.marginBottom = "10px", n.style.padding = "10px", n.style.border = "1px solid #bebebe", n.style.borderRadius = "5px", e.appendChild(n); const r = L.#c(n); return r.header.innerText = t, r.header.style.fontWeight = "600", r.header.style.marginBottom = "5px", r } static #d(e) { const t = document.createElement("div"); t.id = s.getDashboardId(), s.insertStyle(), e.appendChild(t); const n = L.#l(t, "Camera"), r = n.content; L.#i([], !0); const i = document.createElement("div"); i.id = s.getDashboardSectionCameraScanRegionId(), i.style.width = "100%", i.style.minHeight = "100px", i.style.border = "1px solid silver", r.appendChild(i); const o = document.createElement("div"); o.id = s.getDashboardSectionSwapLinkId(); const a = L.#t(o, "#", "Swap camera"); a.id = s.getCameraSwapButtonId(), r.appendChild(o), L.#a(n.footer, !1); const c = L.#l(t, "File"); c.content.innerText = "TODO: file scan implementation"; const d = L.#l(t, "Supported formats"); return d.content.innerText = "TODO: show supported formats", d.footer.innerText = "TODO: provide ability to select formats.", { container: t, cameraScanRegion: i, fileScanRegion: c } } static #u(e, t, n) { const r = s.getElementId(e); if (document.getElementById(r)) throw `HTML element with id=${r} already exists`; const i = document.createElement("div"); i.id = r, i.style.position = "relative", i.style.padding = "0px", i.style.height = t, i.style.width = n, i.style.border = "1px solid silver"; const o = document.createElement("div"); o.style.textAlign = "center", o.style.height = "100%", o.style.width = "100%", o.style.display = "flex", o.style.alignItems = "center", o.style.justifyContent = "center"; const a = document.createElement("video"); return a.style.width = n, a.style.height = t, a.autoplay = !0, a.playsInline = !0, a.muted = !0, i.appendChild(a), i.appendChild(o), { rootElement: i, videoElement: a } } static #h(e, t, n, r, i) { const o = s.getElementId(e), a = document.getElementById(o); if (!a) throw `HTML element with id=${o} already exists`; let c; if ("string" == typeof i) c = i; else { const e = `QR code parsing failed, error = ${L.#e(i.message)}`; c = e } const l = document.createElement("div"); l.innerText = c, l.style.color = "red"; const d = document.createElement("button"); d.innerText = n; const u = t => { t.stopPropagation(), a.removeChild(l), r(i) }; d.addEventListener("click", u) } static #f(e, t, n, r) { const i = document.createElement("div"); i.id = s.getProgressBarId(), i.style.width = "100%", i.style.height = "10px", i.style.backgroundColor = "#bebebe", i.style.borderRadius = "5px"; const o = document.createElement("div"); return o.id = s.getProgressValueId(), o.style.width = `${100 * r}%`, o.style.height = "100%", o.style.backgroundColor = t, o.style.borderRadius = "5px", i.appendChild(o), n && (i.style.marginTop = "5px", e.appendChild(i)), i } static #m(e, t, n, r, i, o) { const a = s.getScannerCutRegionId(); if (document.getElementById(a)) return document.getElementById(a); const c = document.createElement("div"); c.id = a, c.style.position = "absolute", c.style.top = "0px", c.style.left = "0px", c.style.zIndex = 10, c.style.boxSizing = "border-box"; const l = document.createElement("div"); l.style.position = "absolute", l.style.zIndex = 10, l.style.width = `${n}px`, l.style.height = `${r}px`, l.style.top = `${i}px`, l.style.left = `${o}px`, l.style.boxSizing = "border-box", l.style.border = `${e} solid ${t}`, l.style.boxShadow = "inset 0 0 0 5px rgba(255, 255, 255, 0.5)"; const d = document.createElement("div"); d.style.position = "absolute", d.style.zIndex = 9, d.style.left = "0", d.style.top = "0", d.style.width = "100vw", d.style.height = "100vh", d.style.background = "rgba(0, 0, 0, 0.5)", c.appendChild(l); const u = document.createElement("div"); return u.style.position = "absolute", u.style.width = `${n}px`, u.style.height = `${r}px`, u.style.top = `${i}px`, u.style.left = `${o}px`, u.style.zIndex = 10, u.style.pointerEvents = "none", c.appendChild(u), c.appendChild(d), c } static #p(e) { const t = document.createElement("div"); t.id = s.getRegionNotificationId(), t.style.position = "absolute", t.style.zIndex = 10, t.style.top = "5px", t.style.left = "5px", t.style.padding = "5px 10px", t.style.borderRadius = "5px", t.style.background = "rgba(0, 0, 0, 0.55)", t.style.color = "white", e.appendChild(t), t.style.display = "none" } static #g(e) { const t = document.createElement("input"); return t.type = "file", t.accept = "image/*", t.style.display = "none", t.id = s.getFileSelectionInputId(e), t } static #v(e) { if (e.hasChildNodes()) for (; e.firstChild;)e.removeChild(e.firstChild) } static #Q(e, t) { const n = document.getElementById(s.getDashboardSectionCameraScanRegionId()); if (!n) throw "cameraScanRegion not found"; const r = n.getElementsByTagName("video"); if (0 === r.length) throw "video element not found"; const i = r[0], o = i.offsetHeight, a = document.getElementById(s.getCameraSwapButtonId()), c = document.getElementById(s.getTorchButtonId_()); a && (a.style.marginTop = `${o + 5}px`), c && (c.style.marginTop = `${o + 5}px`); const l = s.getTorchButtonId(); document.getElementById(l) } static #b(e) { const t = s.getTorchButtonId_(); document.getElementById(t) ? document.getElementById(t).remove() : console.warn(`Torch button with id ${t} not found.`); if (e.getTracks().length > 1) throw "Torch not supported for multi-track camera."; const n = e.getTracks()[0].getCapabilities(); if (!n.torch) return; const r = document.createElement("button"); r.innerText = "toggle torch", r.id = s.getTorchButtonId_(); const i = document.getElementById(s.getDashboardSectionCameraScanRegionId()); if (!i) throw "cameraScanRegion not found"; const o = e => e.getTracks()[0].applyConstraints({ advanced: [{ torch: !0 }] }), a = e => e.getTracks()[0].applyConstraints({ advanced: [{ torch: !1 }] }); let c = !1; r.addEventListener("click", (() => { c ? a(e) : o(e), c = !c })), i.appendChild(r) } static #w(e, t, n) { const r = document.createElement("div"); r.id = s.getDashboardSectionId(), r.style.padding = "10px"; const i = document.createElement("h1"); i.innerText = e, r.appendChild(i); const o = document.createElement("div"); return o.style.maxWidth = t, o.style.maxHeight = n, o.style.border = "1px solid #bebebe", o.style.padding = "5px", r.appendChild(o), o } static #y(e) { L.#v(e) } static #E(e, t) { const n = document.getElementById(e); if (!n) throw `element with id ${e} not found`; L.#v(n), n.style.position = "relative"; const r = document.createElement("div"); r.id = s.L(); const i = L.#l(r, l.CAMERA.toString()), o = document.createElement("div"); o.id = s.getDashboardSectionCameraScanRegionId(), o.style.width = "100%", o.style.minHeight = "100px", o.style.border = "1px solid silver"; const a = i.content; a.appendChild(o), L.#p(o), n.appendChild(r); const c = document.createElement("div"); c.id = s.F(); const d = L.#t(c, "#", "Swap camera"); d.id = s.m(), a.appendChild(c), L.renderFileScan(n, t) } } var D; !function (e) { e.SCAN_TYPE_CAMERA = "camera", e.SCAN_TYPE_FILE = "file" }(D || (D = {})); class P { constructor(e, t) { this.element = e, this.verbose = t } render(e, t) { const n = "string" == typeof this.element ? document.getElementById(this.element) : this.element; if (!n) throw `HTML element with id=${this.element} not found`; n.innerHTML = "", L.d(n); const r = (e => { const t = document.getElementById(s.getDashboardSectionHeaderId("camera-selection-header")); t && t.remove(); const n = document.getElementById(s.getCameraSelectionContainerId()); n && n.remove(); const r = document.getElementById(s.getCameraPermissionButtonId()); if (r && r.remove(), e) { const t = document.getElementById(s.getDashboardSectionContentId("camera-selection")); if (!t) throw "Unable to locate camera selection content element."; const n = document.createElement("span"); n.id = s.getDashboardSectionHeaderId("camera-selection-header"), n.innerText = "Select camera", t.appendChild(n), L.i(t, e) } }), i = (e, t) => { const n = document.getElementById(s.getDashboardSectionCameraScanRegionId()); if (!n) throw "cameraScanRegion not found"; const r = document.getElementById(s.getCameraSelectionContainerId()); r && (r.style.display = "none"); const i = n.getElementsByTagName("video"); if (0 === i.length) return void e(); const o = i[0]; let a, c; const l = d => { a = d.getTracks(), c = setInterval((() => { const e = o.videoWidth, n = o.videoHeight; e && n && (clearInterval(c), L.Q(this.elementId), t()) }), 100) }, d = t => { clearInterval(c), e(t) }; o.onloadeddata = () => l(o.srcObject), o.onerror = d }; e(r, i) } } class O { constructor(e, t, n) { this.elementId = e, this.config = t, this.verbose = n, this.section = null, this.sectionSwapAllowed = !0, this.currentScanType = D.SCAN_TYPE_CAMERA, this.isRendered = !1, this.cameraScanAction = null, this.fileScanAction = null, this.clearAction = null, this.showLog = n } render(e, t, n) { if (this.isRendered) throw "UI is already rendered. Not rendering again"; this.cameraScanAction = e, this.fileScanAction = t, this.clearAction = n, L.y(this.getHtml5QrcodeElement()); let r = this.config ? this.config.supportedScanTypes : void 0; (!r || r.length < 2) && (this.sectionSwapAllowed = !1); const i = this.getInitialScanType(this.config); this.renderChild(i) } renderChild(e) { this.currentScanType = e; const t = this.getHtml5QrcodeElement(); L.y(t), this.section && this.section.stop(); let n = !1; this.config && this.config.disableFlip && (n = this.config.disableFlip); const r = this.config ? this.config.qrbox : void 0; this.section = this.createSection(e, r, n), this.section.render(this.cameraScanAction, this.fileScanAction), this.sectionSwapAllowed && this.addSwapLink() } createSection(e, t, n) { switch (e) { case D.SCAN_TYPE_CAMERA: return new M(this.elementId, t, n, this.verbose); case D.SCAN_TYPE_FILE: return new B(this.elementId, t, this.verbose); default: throw `Unsupported scan type ${e}` } } addSwapLink() { const e = this.getHtml5QrcodeElement(), t = s.getAnchorScanTypeChangeId(); if (document.getElementById(t)) throw "Anchor element already exists"; const n = this.currentScanType === D.SCAN_TYPE_FILE ? D.SCAN_TYPE_CAMERA : D.SCAN_TYPE_FILE; let r; r = this.currentScanType === D.SCAN_TYPE_FILE ? "Scan using camera" : "Scan an image file"; const i = document.createElement("a"); i.id = t, i.href = "#", i.innerText = r, i.addEventListener("click", (() => { this.clearAction && this.clearAction(), this.renderChild(n) })); const o = document.createElement("div"); o.style.marginTop = "10px", o.appendChild(i), e.appendChild(o) } getInitialScanType(e) { if (!e) return D.SCAN_TYPE_CAMERA; const t = e.defaultScanType; return t ? t : (t = e.supportedScanTypes) && 1 === t.length ? t[0] : D.SCAN_TYPE_CAMERA } getHtml5QrcodeElement() { const e = document.getElementById(this.elementId); if (!e) throw `HTML element with id ${this.elementId} not found.`; return e } } class M { constructor(e, t, n, r) { this.elementId = e, this.qrboxSize = t, this.disableFlip = n, this.verbose = r, this.cameras = null } render(e, t) { this.cameraScanAction = e, this.fileScanAction = t, L.E(this.elementId, this.verbose), this.mountCameraScanUI(e), document.getElementById(s.m()).addEventListener("click", (() => { this.flipCamera() })), u.getCameras(this.verbose).then((e => { this.cameras = e, this.onCamerasFetched() })).catch((e => { this.showError(e, !0) })) } stop() { } mountCameraScanUI(e) { const t = document.getElementById(s.B()); L.y(t); const n = document.createElement("button"); n.innerText = "Start Scanning", t.appendChild(n); const r = document.createElement("button"); r.innerText = "Stop Scanning", r.disabled = !0, t.appendChild(n); const i = document.getElementById(s.s()); i.addEventListener("change", (() => { const t = i.value; e(t) })), n.addEventListener("click", (() => { r.disabled = !1, n.disabled = !0, e(i.value) })), r.addEventListener("click", (() => { r.disabled = !0, n.disabled = !1 })) } flipCamera() { if (!this.cameras || this.cameras.length < 2) return void (this.verbose && console.log("No cameras to flip")); const e = document.getElementById(s.s()), t = e.value, n = this.cameras.map((e => e.id)), r = n.indexOf(t); if (-1 === r) return void (this.verbose && console.log("current camera not in list of cameras.")); const i = (r + 1) % n.length; e.value = n[i], this.cameraScanAction(e.value) } onCamerasFetched() { if (!this.cameras || 0 === this.cameras.length) return void this.showError("No cameras found", !1); const e = document.getElementById(s.s()); L.y(e); const t = document.createElement("option"); t.value = "-1", t.disabled = !0, t.innerText = "Select camera", this.cameras.length || (t.selected = !0); for (const n of this.cameras) { const r = document.createElement("option"); r.value = n.id; let i = n.label ? n.label : n.id; i || (i = n.id), r.innerText = i, e.appendChild(r) } e.disabled = !1, document.getElementById(s.m()).style.display = this.disableFlip || this.cameras.length < 2 ? "none" : "inline-block" } showError(e, t) { const n = `Error: ${e}`; if (t) { const e = new Error(n); e.name = "PERMISSION_DENIED", this.cameraScanAction(e) } console.error(n) } } class B { constructor(e, t, n) { this.elementId = e, this.qrboxSize = t, this.verbose = n } render(e, t) { L.renderFileScan(this.getHtml5QrcodeElement(), t) } stop() { } getHtml5QrcodeElement() { const e = document.getElementById(this.elementId); if (!e) throw `HTML element with id ${this.elementId} not found.`; return e } } class F { constructor(e, t) { this.logger = e, this.isScanning = !1, this.html5Qrcode = t, this.shouldUseFixForVideoRecord = F.isAndroidOrIOS(), this.isStreaming = null, this.activeCameraId = null } async start(e, t, n, r) { if (!e) throw "config is required"; if (!n || "function" != typeof n) throw "qrCodeSuccessCallback is required."; this.isScanning && await this.stop(); const i = this.createVideoConstraints(e); this.successCallback = n, this.errorCallback = r, this.isStreaming = e.rememberLastUsedCamera && F.isLastCameraIdSaved(t) ? "camera" === F.getLastUsedCameraId(t).type : null; let o; o = "object" == typeof e ? e.facingMode ? e.facingMode : e.deviceId ? { exact: e.deviceId } : "environment" : "environment"; const a = e.deviceId ? { exact: e.deviceId } : void 0; this.logger.log("Starting scanner with constraints", i); try { const e = await this.html5Qrcode.start(i, t, n, r); this.shouldUseFixForVideoRecord && null === this.isStreaming && this.isStreaming && this.fixVideoRecordIssue(e.stream), this.isScanning = !0, this.html5Qrcode.isScanning && F.saveLastUsedCameraId(this.html5Qrcode.getRunningTrackSettings().deviceId, t), this.activeCameraId = this.html5Qrcode.getRunningTrackSettings().deviceId } catch (e) { this.logger.logError("Error starting camera", e), r && r(e.message, e) } } async stop() { if (!this.isScanning) return Promise.resolve(); this.isScanning = !1; try { await this.html5Qrcode.stop(); this.activeCameraId = null } catch (e) { throw this.logger.logError("Error stopping camera", e), e } } async scanFile(e, t) { if (!e || !e.files || 0 === e.files.length) throw "FILE_INPUT_EMPTY: File input is empty."; const n = e.files[0]; return this.scanFileV2(n, t) } async scanFileV2(e, t) { return this.html5Qrcode.scanFileV2(e, t) } getRunningTrackCapabilities() { return this.html5Qrcode.getRunningTrackCapabilities() } applyVideoConstraints(e) { return this.html5Qrcode.applyVideoConstraints(e) } set pause(e) { this.html5Qrcode.pause = e } clear() { this.html5Qrcode.clearElement() } static getCameras(e) { return u.getCameras(e) } createVideoConstraints(e) { if (e) return e.deviceId ? { deviceId: { exact: e.deviceId } } : "object" == typeof e.facingMode ? { facingMode: e.facingMode } : e.facingMode ? { facingMode: e.facingMode } : e.deviceId ? { deviceId: e.deviceId } : A; return A } fixVideoRecordIssue(e) { this.logger.log("Fixing video record issue."), setTimeout((() => { e.getTracks().forEach((e => { e.stop() })), this.stop().then((() => this.start(this.activeCameraId, this.config, this.successCallback, this.errorCallback))).catch((e => { this.logger.log("Error handling video record issue", e), this.errorCallback && this.errorCallback(e.message, e) })) }), 500) } static isAndroidOrIOS() { return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) } static isLastCameraIdSaved(e) { return !(!e || !e.rememberLastUsedCamera || !window.localStorage) } static saveLastUsedCameraId(e, t) { F.isLastCameraIdSaved(t) && window.localStorage.setItem("HTML5_QRCODE_LAST_CAMERA_ID", JSON.stringify({ type: "camera", value: e })) } static getLastUsedCameraId(e) { return F.isLastCameraIdSaved(e) ? JSON.parse(window.localStorage.getItem("HTML5_QRCODE_LAST_CAMERA_ID")) : null } static isMediaStreamConstraintsValid(e) { if (!e) return !1; const t = ["deviceId", "facingMode", "aspectRatio", "frameRate", "width", "height"]; for (const n in e) if (-1 === t.indexOf(n)) return !1; return !0 } } class _ extends h { constructor(e, t) { super(t), this.elementId = e, this.verbose = t, this.html5Qrcode = new T(e, t), this.ui = new P(e, t) } render(e, t) { this.ui.render(e, t) } } class U extends T { constructor(e, t, n) { var r; super(e, n), this.experimental = t, this.decoder = null, this.isScanning = !1, this.preferredCamera = !0, null === (r = this.experimental) || void 0 === r || delete r.useBarCodeDetectorIfSupported, this.isScanning = !1 } createScanner(e) { let t; if (e && e.formatsToSupport) t = e.formatsToSupport; else { const e = []; for (const t of Object.keys(o)) e.push(t); t = e } return new BarcodeDetector({ formats: t }) } getExperiment(e, t) { if (window.BarcodeDetector) return this.verbose && console.log("Using BarcodeDetector API"), new E(new BarcodeDetector(this.experimental), e, t); return null } } class H extends T { constructor(e, t) { super(e, t), this.decoder = null, this.isScanning = !1, this.preferredCamera = !0 } createScanner(e, t) { return new k(new BrowserQRCodeReader(e), e, t) } getExperiment(e, t) { return new k(new BrowserQRCodeReader(e), e, t) } } class N extends T { constructor(e, t, n) { super(e, n), this.zbarDecoderAsync = t } createScanner(e, t) { return new C(this.zbarDecoderAsync, this.verbose) } getExperiment(e, t) { return new C(this.zbarDecoderAsync, this.verbose) } } class V extends h { constructor(e, t) { super(t), this.elementId = e, this.config = e, this.html5Qrcode = null, this.localMediaStream = null, this.shouldScan = e.fps > 0, this.foreverScanTimeout, this.isScanning = !1, this.logger = new h(t) } start(e, t, n, r) { if (!e) throw "cameraIdOrConfig is required"; if (!n || "function" != typeof n) throw "qrCodeSuccessCallback is required."; if (this.isScanning) throw "QR code scanning is already running."; this.html5Qrcode = new Q(this.elementId, this.verbose), this.config = t, this.html5Qrcode.start(e, t, n).then((e => { if (this.localMediaStream = e.stream, this.isScanning = !0, this.shouldScan) { const i = t.fps ? 1e3 / t.fps : 500; this.foreverScanTimeout = setInterval((() => { this.foreverScan(this.html5Qrcode, n, r) }), i) } else this.foreverScan(this.html5Qrcode, n, r) })).catch((e => { this.logger.log("Error starting a scan session", e), r && r("Failed to start the camera", e) })) } async stop() { this.shouldScan = !1, clearTimeout(this.foreverScanTimeout), await this.html5Qrcode.stop() } getRunningTrackCapabilities() { if (!this.html5Qrcode) throw "html5Qrcode not defined"; return this.html5Qrcode.getRunningTrackCapabilities() } applyVideoConstraints(e) { if (!this.html5Qrcode) throw "html5Qrcode not defined"; return this.html5Qrcode.applyVideoConstraints(e) } foreverScan(e, t, n) { if (!this.isScanning) return; const r = new BarcodeDetector; r.detect(e.videoElement).then((e => { if (!e || 0 == e.length) return; const r = e[0]; t(r.rawValue, { result: r }) })).catch((e => { n && n(e) })) } set pause(e) { if (!this.isScanning) return; this.shouldScan = !e } get isScanning() { return this.isScanning } } class q { static #e = {}; static #t(t, n) { const r = new Set; if (t.formatsToSupport) { if (!Array.isArray(t.formatsToSupport)) throw "'formatsToSupport' must be an array."; if (0 === t.formatsToSupport.length) throw "'formatsToSupport' must be a non-empty array."; const n = new Set(t.formatsToSupport); for (const t of n) if (!e[t]) throw `Invalid format specified, allowed formats are ${Object.keys(e)}`; else r.add(e[t]) } const i = new Set(n.map((t => e[t]))); for (const e of r) if (!i.has(e)) throw `The passed 'formatsToSupport' is not supported by the browser.`; return t.formatsToSupport ? Array.from(r) : n } static #n(e, t) { let n = !1; return t && t.experimentalFeatures && (n = !!t.experimentalFeatures.useBarcodeDetectorIfSupported), e && n } static #r(e) { return new Promise(((t, n) => { if (e) { const r = e.experimentalFeatures; if (r && r.useZxingDecoderIfSupported) { const e = "https://unpkg.com/@zxing/browser@0.0.9/custom/zxing-browser.js"; return void import(e).then((e => { t(new H(e.BrowserQRCodeReader, this.verbose)) })).catch(n) } t(null) } t(null) })) }return class { constructor(e, t) { this.elementId = e, this.verbose = !1, "boolean" == typeof t ? this.verbose = t : t && (this.verbose = !!t.verbose); this.logger = new h(this.verbose), this.html5Qrcode = new T(this.elementId, this.verbose), this.scanner = new F(this.logger, this.html5Qrcode) } async start(e, t, n, r) { this.scanner = new F(this.logger, this.html5Qrcode); const i = this.getConfig(t); this.html5Qrcode.config = i; const o = this.createVideoConstraints(e); this.verbose && console.log("video constraints", o), await this.scanner.start(o, i, n, r) } async stop() { return this.scanner.stop() } async scanFile(e, t = !0) { return this.html5Qrcode.scanFile(e, t) } async scanFileV2(e, t) { const n = this.getConfig(t); return this.html5Qrcode.scanFileV2(e, n) } clear() { this.html5Qrcode.clearElement() } async getCameras() { return F.getCameras(this.verbose) } get activeCamera() { return this.scanner.activeCameraId } set pause(e) { this.scanner.pause = e } get isScanning() { return this.scanner.isScanning } getRunningTrackCapabilities() { return this.scanner.getRunningTrackCapabilities() } applyVideoConstraints(e) { return this.scanner.applyVideoConstraints(e) } #e() { const e = { fps: 10, qrbox: 250, aspectRatio: void 0, disableFlip: !1, videoConstraints: void 0 }; return e } getRunningTrackSettings() { return this.html5Qrcode.getRunningTrackSettings() } createVideoConstraints(e) { if ("string" == typeof e) return { deviceId: e }; if ("object" == typeof e) { if (F.isMediaStreamConstraintsValid(e)) return e; if (e.deviceId || e.facingMode) return m.create(e, this.verbose).toDict(); if (e.id) return { deviceId: { exact: e.id } } } throw "Invalid camera or media constraints object." } getConfig(e) { const t = this.#e(); return e ? (e.fps && (t.fps = e.fps), e.qrbox && (t.qrbox = e.qrbox), e.aspectRatio && (t.aspectRatio = e.aspectRatio), e.disableFlip && (t.disableFlip = e.disableFlip), e.rememberLastUsedCamera && (t.rememberLastUsedCamera = e.rememberLastUsedCamera), e.supportedScanTypes && (t.supportedScanTypes = e.supportedScanTypes), t.videoConstraints && (t.videoConstraints = e.videoConstraints), t) : t } }
+        }));
+        // ===== [END] html5-qrcode.min.js v2.3.8 - Library Code =====
+
+
+        // ===== Application Logic =====
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Element References ---
+            const scannerView = document.getElementById('scanner-view');
+            const resultView = document.getElementById('result-view');
+            const historyModal = document.getElementById('history-modal');
+            const resultContainer = document.getElementById('result-container');
+            const historyContent = document.getElementById('history-content');
+            const scannerStatus = document.getElementById('scanner-status');
+
+            // --- Buttons ---
+            const showHistoryBtn = document.getElementById('show-history-btn');
+            const scanCompleteBtn = document.getElementById('scan-complete-btn');
+            const closeHistoryBtn = document.getElementById('close-history-btn');
+            const copyHistoryBtn = document.getElementById('copy-history-btn');
+            const copyFeedback = document.getElementById('copy-feedback');
+
+            let html5QrCode = null;
+
+            // --- Functions ---
+            /**
+            * Switches the view between scanner and results.
+            * @param {'scanner' | 'result'} viewName - The view to show.
+            */
+            function switchView(viewName) {
+                if (viewName === 'result') {
+                    scannerView.classList.add('hidden');
+                    resultView.classList.remove('hidden');
+                } else {
+                    scannerView.classList.remove('hidden');
+                    resultView.classList.add('hidden');
+                }
+            }
+
+            /**
+            * Parses the raw QR code text to extract structured information.
+            * @param {string} text - The raw text from the QR code.
+            * @returns {object} An object containing parsed data.
+            */
+            function parseQrText(text) {
+                const data = {
+                    name: '情報なし',
+                    participationType: '情報なし',
+                    socialEvent: '不参加',
+                    luncheons: [],
+                    raw: text
+                };
+
+                const nameMatch = text.match(/氏名:\s*(.*)/);
+                if (nameMatch && nameMatch[1]) {
+                    data.name = nameMatch[1].trim();
+                }
+
+                const typeMatch = text.match(/学術集会参加登録\s*-\s*([^-]+)/);
+                if (typeMatch && typeMatch[1]) {
+                    data.participationType = typeMatch[1].trim();
+                } else {
+                    if (text.includes('一般')) data.participationType = '一般';
+                    if (text.includes('学部生・院生')) data.participationType = '学部生・院生';
+                }
+
+                if (text.includes('懇親会参加登録')) {
+                    data.socialEvent = '参加';
+                }
+
+                const luncheonRegex = /LS-\d+.*?(-|氏名:|$)/g;
+                let match;
+                while ((match = luncheonRegex.exec(text)) !== null) {
+                    let cleanedMatch = match[0].replace(/氏名:.*$/, '').replace(/-$/, '').trim();
+                    if (cleanedMatch) {
+                        data.luncheons.push(cleanedMatch);
+                    }
+                }
+
+                return data;
+            }
+
+            /**
+            * Renders the parsed data into the result view.
+            * @param {object} data - The parsed data object.
+            */
+            function displayResult(data) {
+                const renderField = (label, value, valueClass = '') => `
+            <div class="result-field">
+                <p>${label}</p>
+                <p class="${valueClass}">${value}</p>
+            </div>
+        `;
+
+                let luncheonsHtml = data.luncheons.length > 0
+                    ? '<ul>' + data.luncheons.map(l => `<li>${l}</li>`).join('') + '</ul>'
+                    : '<p class="text-gray-500" style="font-weight: normal; font-size: 1rem; margin-top: 0.5rem;">参加セミナーなし</p>';
+
+                resultContainer.innerHTML = `
+            ${renderField('氏名', data.name, 'text-blue-700')}
+            ${renderField('参加形式', data.participationType)}
+            ${renderField('懇親会', data.socialEvent, data.socialEvent === '参加' ? 'text-green-600' : 'text-red-600')}
+            <div class="result-field result-luncheons">
+                <p>参加ランチョンセミナー</p>
+                ${luncheonsHtml}
+            </div>
+        `;
+            }
+
+            /**
+            * Saves a scanned record to Web Storage (localStorage).
+            * @param {string} qrText - The raw text from the QR code.
+            */
+            function saveRecordToHistory(qrText) {
+                try {
+                    const timestamp = new Date().toISOString();
+                    localStorage.setItem(`qrScan_${timestamp}`, qrText);
+                } catch (e) {
+                    console.error("履歴の保存に失敗しました:", e);
+                    alert("ブラウザのストレージに空きがないため、履歴を保存できませんでした。");
+                }
+            }
+
+            /**
+            * Loads and displays all records from localStorage.
+            */
+            function showHistory() {
+                const records = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('qrScan_')) {
+                        const timestamp = key.substring(7);
+                        const record = localStorage.getItem(key);
+                        records.push({ timestamp, record });
+                    }
+                }
+
+                records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+
+                if (records.length === 0) {
+                    historyContent.textContent = '読み取り履歴はありません。';
+                } else {
+                    historyContent.textContent = records.map(r => `[${new Date(r.timestamp).toLocaleString('ja-JP')}]\n${r.record}`).join('\n\n---\n\n');
+                }
+                historyModal.classList.remove('hidden');
+            }
+
+            /**
+            * Starts the QR code scanner.
+            */
+            function startScanner() {
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("reader");
+                }
+                scannerStatus.textContent = 'カメラを起動中...';
+
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: (viewfinderWidth, viewfinderHeight) => {
+                            const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.8;
+                            return { width: size, height: size };
+                        }
+                    },
+                    (decodedText, decodedResult) => {
+                        onScanSuccess(decodedText);
+                    },
+                    (errorMessage) => { /* ignore */ }
+                ).then(() => {
+                    scannerStatus.textContent = 'スキャン待機中';
+                }).catch((err) => {
+                    scannerStatus.textContent = 'カメラの起動に失敗しました。ページを再読み込みするか、カメラの権限を確認してください。';
+                    console.error(`Unable to start scanning, error: ${err}`);
+                });
+            }
+
+            /**
+            * Stops the QR code scanner.
+            */
+            async function stopScanner() {
+                if (html5QrCode && html5QrCode.isScanning) {
+                    try {
+                        await html5QrCode.stop();
+                    } catch (err) {
+                        console.error("Scanner stop failed", err);
+                    }
+                }
+            }
+
+            /**
+            * Handles successful QR code scans.
+            * @param {string} qrText - The decoded text from the QR code.
+            */
+            async function onScanSuccess(qrText) {
+                await stopScanner();
+
+                if (navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
+
+                const parsedData = parseQrText(qrText);
+                saveRecordToHistory(qrText);
+                displayResult(parsedData);
+                switchView('result');
+            }
+
+            // --- Event Listeners ---
+            showHistoryBtn.addEventListener('click', async () => {
+                await stopScanner();
+                showHistory();
+            });
+
+            closeHistoryBtn.addEventListener('click', () => {
+                historyModal.classList.add('hidden');
+                copyFeedback.classList.add('hidden');
+                startScanner(); // Restart scanner when closing history
+            });
+
+            scanCompleteBtn.addEventListener('click', () => {
+                switchView('scanner');
+                startScanner();
+            });
+
+            copyHistoryBtn.addEventListener('click', () => {
+                const textToCopy = historyContent.textContent;
+                if (navigator.clipboard && textToCopy !== '読み取り履歴はありません。') {
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        copyFeedback.classList.remove('hidden');
+                        setTimeout(() => copyFeedback.classList.add('hidden'), 2000);
+                    }).catch(err => {
+                        console.error('クリップボードへのコピーに失敗しました:', err);
+                        // Fallback for older browsers
+                        try {
+                            const textArea = document.createElement("textarea");
+                            textArea.value = textToCopy;
+                            document.body.appendChild(textArea);
+                            textArea.focus();
+                            textArea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textArea);
+                            copyFeedback.classList.remove('hidden');
+                            setTimeout(() => copyFeedback.classList.add('hidden'), 2000);
+                        } catch (e) {
+                            alert('クリップボードへのコピーに失敗しました。');
+                        }
+                    });
+                }
+            });
+
+            // --- Initial Load ---
+            startScanner();
+        });
+    </script>
+
+</body>
+
+</html>
